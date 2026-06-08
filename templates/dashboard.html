@@ -6,37 +6,76 @@ Dashboard
 
 {% block content %}
 
-<h1>Dashboard</h1>
+<style>
+    .dashboard-header {
+        color: #2c3e50;
+        font-size: 28px;
+        margin-bottom: 30px;
+        font-weight: bold;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-left: 6px solid #4e73df; /* Azul por defeito */
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    /* Cores personalizadas para cada tipo de cartão */
+    .border-primary { border-left-color: #4e73df !important; }
+    .border-success { border-left-color: #1cc88a !important; }
+    .border-warning { border-left-color: #f6c23e !important; }
+
+    .stat-title {
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #858796;
+        margin-bottom: 10px;
+    }
+
+    .stat-value {
+        font-size: 36px;
+        font-weight: bold;
+        color: #3a3b45;
+        margin: 0;
+    }
+</style>
+
+<h1 class="dashboard-header">Dashboard</h1>
 
 <div class="row mt-4">
-
-    <div class="col-md-4">
-
-        <div class="card p-3">
-            <h5>Total Assets</h5>
-            <h2>{{ total_assets }}</h2>
+    <div class="col-md-4 mb-4">
+        <div class="stat-card border-primary">
+            <div class="stat-title">Total Assets</div>
+            <h2 class="stat-value">{{ total_assets }}</h2>
         </div>
-
     </div>
 
-    <div class="col-md-4">
-
-        <div class="card p-3">
-            <h5>Active Assets</h5>
-            <h2>{{ active_assets }}</h2>
+    <div class="col-md-4 mb-4">
+        <div class="stat-card border-success">
+            <div class="stat-title">Active Assets</div>
+            <h2 class="stat-value">{{ active_assets }}</h2>
         </div>
-
     </div>
 
-    <div class="col-md-4">
-
-        <div class="card p-3">
-            <h5>Interventions</h5>
-            <h2>0</h2>
+    <div class="col-md-4 mb-4">
+        <div class="stat-card border-warning">
+            <div class="stat-title">Interventions</div>
+            <h2 class="stat-value">{{ total_interventions }}</h2>
         </div>
-
     </div>
-
 </div>
 
 {% endblock %}

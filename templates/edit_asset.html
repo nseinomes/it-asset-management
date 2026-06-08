@@ -1,42 +1,83 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Edit Asset</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h1>Edit Asset</h1>
+{% block content %}
 
-<form method="POST">
+<style>
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 35px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        max-width: 600px;
+    }
 
-    <label>Asset Tag</label><br>
-    <input type="text" name="asset_tag" value="{{ asset.asset_tag }}"><br><br>
+    .form-card h1 {
+        color: #2c3e50;
+        margin-bottom: 25px;
+        font-size: 24px;
+    }
 
-    <label>Name</label><br>
-    <input type="text" name="name" value="{{ asset.name }}"><br><br>
+    .form-card label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: bold;
+        color: #2c3e50;
+        font-size: 14px;
+    }
 
-    <label>Brand</label><br>
-    <input type="text" name="brand" value="{{ asset.brand }}"><br><br>
+    .form-card input,
+    .form-card select {
+        width: 100%;
+        padding: 10px 12px;
+        margin-bottom: 18px;
+        border: 1px solid #dcdde1;
+        border-radius: 8px;
+        font-size: 14px;
+    }
 
-    <label>Model</label><br>
-    <input type="text" name="model" value="{{ asset.model }}"><br><br>
+    .form-card input:focus,
+    .form-card select:focus {
+        outline: none;
+        border-color: #4e73df;
+    }
 
-    <label>Status</label><br>
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 5px;
+    }
+</style>
 
-    <select name="status">
-        <option>{{ asset.status }}</option>
-        <option>Active</option>
-        <option>Maintenance</option>
-        <option>Inactive</option>
-    </select>
+<div class="form-card">
+    <h1>Edit Asset</h1>
 
-    <br><br>
+    <form method="POST">
 
-    <button type="submit">
-        Update Asset
-    </button>
+        <label>Asset Tag</label>
+        <input type="text" name="asset_tag" value="{{ asset.asset_tag }}" required>
 
-</form>
+        <label>Name</label>
+        <input type="text" name="name" value="{{ asset.name }}" required>
 
-</body>
-</html>
+        <label>Brand</label>
+        <input type="text" name="brand" value="{{ asset.brand }}">
+
+        <label>Model</label>
+        <input type="text" name="model" value="{{ asset.model }}">
+
+        <label>Status</label>
+        <select name="status">
+            <option value="Active"      {% if asset.status == 'Active' %}selected{% endif %}>Active</option>
+            <option value="Maintenance" {% if asset.status == 'Maintenance' %}selected{% endif %}>Maintenance</option>
+            <option value="Inactive"    {% if asset.status == 'Inactive' %}selected{% endif %}>Inactive</option>
+        </select>
+
+        <div class="form-actions">
+            <a href="/assets"><button type="button" class="btn-warning">Cancel</button></a>
+            <button type="submit" class="btn-primary">Update Asset</button>
+        </div>
+
+    </form>
+</div>
+
+{% endblock %}
