@@ -1,65 +1,94 @@
 {% extends "base.html" %}
 
+{% block title %}Reports{% endblock %}
+
 {% block content %}
 
-<h1>Reports</h1>
+<style>
+    .page-header {
+        margin-bottom: 24px;
+    }
 
-<div class="cards">
+    .page-header h1 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a1f2e;
+        margin: 0;
+    }
 
-    <div class="card">
-        <h3>Total Assets</h3>
-        <div class="number">{{ total_assets }}</div>
-    </div>
+    .stats-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+    }
 
-    <div class="card">
-        <h3>Active Assets</h3>
-        <div class="number">{{ active_assets }}</div>
-    </div>
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px 24px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        min-width: 180px;
+    }
 
+    .stat-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #9ca3af;
+        margin-bottom: 8px;
+    }
+
+    .stat-value {
+        font-size: 34px;
+        font-weight: 700;
+        color: #4e73df;
+    }
+
+    .export-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        max-width: 420px;
+    }
+
+    .export-card h2 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1a1f2e;
+        margin: 0 0 6px;
+    }
+
+    .export-card p {
+        font-size: 13px;
+        color: #6b7280;
+        margin: 0 0 16px;
+    }
+</style>
+
+<div class="page-header">
+    <h1>Reports</h1>
 </div>
 
-<br><br>
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-label">Total Assets</div>
+        <div class="stat-value">{{ total_assets }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Active Assets</div>
+        <div class="stat-value" style="color:#1cc88a;">{{ active_assets }}</div>
+    </div>
+</div>
 
-<a href="/export-assets">
-    <button class="btn-primary">
-        Export Assets CSV
-    </button>
-</a>
-
-<style>
-
-.cards{
-    display:flex;
-    gap:20px;
-}
-
-.card{
-    background:white;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.1);
-    min-width:220px;
-}
-
-.number{
-    font-size:32px;
-    font-weight:bold;
-    color:#4e73df;
-}
-
-.btn-primary{
-    background:#4e73df;
-    color:white;
-    border:none;
-    padding:12px 20px;
-    border-radius:8px;
-    cursor:pointer;
-}
-
-.btn-primary:hover{
-    background:#2e59d9;
-}
-
-</style>
+<div class="export-card">
+    <h2>Export Assets</h2>
+    <p>Download all assets as a CSV file for use in Excel or other tools.</p>
+    <a href="/export-assets" class="btn-primary">⬇️ Export CSV</a>
+</div>
 
 {% endblock %}

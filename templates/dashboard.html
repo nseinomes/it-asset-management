@@ -1,80 +1,168 @@
 {% extends "base.html" %}
 
-{% block title %}
-Dashboard
-{% endblock %}
+{% block title %}Dashboard{% endblock %}
 
 {% block content %}
 
 <style>
-    .dashboard-header {
-        color: #2c3e50;
-        font-size: 28px;
-        margin-bottom: 30px;
-        font-weight: bold;
+    .page-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a1f2e;
+        margin-bottom: 24px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
     }
 
     .stat-card {
         background: white;
         border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border-left: 6px solid #4e73df; /* Azul por defeito */
-        display: flex;
-        flex-direction: column;
-        height: 100%;
+        padding: 20px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
     }
 
     .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
     }
 
-    /* Cores personalizadas para cada tipo de cartão */
-    .border-primary { border-left-color: #4e73df !important; }
-    .border-success { border-left-color: #1cc88a !important; }
-    .border-warning { border-left-color: #f6c23e !important; }
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 3px;
+    }
 
-    .stat-title {
-        font-size: 14px;
-        font-weight: 700;
+    .stat-card.blue::after   { background: #4e73df; }
+    .stat-card.green::after  { background: #1cc88a; }
+    .stat-card.yellow::after { background: #f6c23e; }
+    .stat-card.red::after    { background: #e74a3b; }
+    .stat-card.purple::after { background: #8b5cf6; }
+
+    .stat-label {
+        font-size: 11px;
+        font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #858796;
+        letter-spacing: 0.8px;
+        color: #9ca3af;
         margin-bottom: 10px;
     }
 
     .stat-value {
-        font-size: 36px;
-        font-weight: bold;
-        color: #3a3b45;
-        margin: 0;
+        font-size: 34px;
+        font-weight: 700;
+        line-height: 1;
+        color: #1a1f2e;
     }
+
+    .stat-card.blue   .stat-value { color: #4e73df; }
+    .stat-card.green  .stat-value { color: #1cc88a; }
+    .stat-card.yellow .stat-value { color: #d4a017; }
+    .stat-card.red    .stat-value { color: #e74a3b; }
+    .stat-card.purple .stat-value { color: #8b5cf6; }
+
+    .stat-icon {
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+
+    .quick-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px 24px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .quick-card h2 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #6b7280;
+        margin: 0 0 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .quick-links {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .quick-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-size: 13.5px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: 0.2s;
+    }
+
+    .quick-link.solid {
+        background: #4e73df;
+        color: white;
+    }
+
+    .quick-link.solid:hover { background: #2e59d9; color: white; }
+
+    .quick-link.ghost {
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+    }
+
+    .quick-link.ghost:hover { background: #e9ecef; color: #374151; }
 </style>
 
-<h1 class="dashboard-header">Dashboard</h1>
+<div class="page-title">Dashboard</div>
 
-<div class="row mt-4">
-    <div class="col-md-4 mb-4">
-        <div class="stat-card border-primary">
-            <div class="stat-title">Total Assets</div>
-            <h2 class="stat-value">{{ total_assets }}</h2>
-        </div>
+<div class="stats-grid">
+    <div class="stat-card blue">
+        <div class="stat-icon">🖥️</div>
+        <div class="stat-label">Total Assets</div>
+        <div class="stat-value">{{ total_assets }}</div>
     </div>
-
-    <div class="col-md-4 mb-4">
-        <div class="stat-card border-success">
-            <div class="stat-title">Active Assets</div>
-            <h2 class="stat-value">{{ active_assets }}</h2>
-        </div>
+    <div class="stat-card green">
+        <div class="stat-icon">✅</div>
+        <div class="stat-label">Active</div>
+        <div class="stat-value">{{ active_assets }}</div>
     </div>
+    <div class="stat-card yellow">
+        <div class="stat-icon">🔧</div>
+        <div class="stat-label">Maintenance</div>
+        <div class="stat-value">{{ maintenance_assets }}</div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-icon">❌</div>
+        <div class="stat-label">Inactive</div>
+        <div class="stat-value">{{ inactive_assets }}</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-icon">📋</div>
+        <div class="stat-label">Interventions</div>
+        <div class="stat-value">{{ total_interventions }}</div>
+    </div>
+</div>
 
-    <div class="col-md-4 mb-4">
-        <div class="stat-card border-warning">
-            <div class="stat-title">Interventions</div>
-            <h2 class="stat-value">{{ total_interventions }}</h2>
-        </div>
+<div class="quick-card">
+    <h2>Quick Actions</h2>
+    <div class="quick-links">
+        <a href="/add-asset"     class="quick-link solid">➕ Add Asset</a>
+        <a href="/assets"        class="quick-link ghost">💻 View Assets</a>
+        <a href="/interventions" class="quick-link ghost">🔧 Interventions</a>
+        <a href="/reports"       class="quick-link ghost">📄 Reports</a>
     </div>
 </div>
 

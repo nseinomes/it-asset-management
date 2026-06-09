@@ -1,46 +1,172 @@
 {% extends "base.html" %}
 
+{% block title %}Assets{% endblock %}
+
 {% block content %}
 
-<h1>Assets Management</h1>
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
 
-<a href="/add-asset">
-    <button class="btn-primary">Add Asset</button>
-</a>
+    .page-header h1 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a1f2e;
+        margin: 0;
+    }
 
-<br><br>
+    .table-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
 
-<table class="table">
-    <tr>
-        <th>ID</th>
-        <th>Asset Tag</th>
-        <th>Name</th>
-        <th>Brand</th>
-        <th>Model</th>
-        <th>Status</th>
-        <th>Actions</th>
-    </tr>
+    .table-search {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f0f0f0;
+    }
 
-    {% for asset in assets %}
-    <tr>
-        <td>{{ asset.id }}</td>
-        <td>{{ asset.asset_tag }}</td>
-        <td>{{ asset.name }}</td>
-        <td>{{ asset.brand }}</td>
-        <td>{{ asset.model }}</td>
-        <td>{{ asset.status }}</td>
+    .table-search input {
+        width: 280px;
+        padding: 8px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 7px;
+        font-size: 13px;
+        outline: none;
+        font-family: 'Inter', sans-serif;
+    }
 
-        <td>
-            <a href="/edit-asset/{{ asset.id }}">
-                <button class="btn-warning">Edit</button>
-            </a>
+    .table-search input:focus {
+        border-color: #4e73df;
+    }
 
-            <a href="/delete-asset/{{ asset.id }}">
-                <button class="btn-danger">Delete</button>
-            </a>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    thead th {
+        padding: 11px 18px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+
+    tbody tr:hover { background: #f8f9ff; }
+
+    tbody td {
+        padding: 13px 18px;
+        font-size: 13.5px;
+        color: #374151;
+    }
+
+    .asset-tag {
+        font-family: monospace;
+        font-size: 12px;
+        background: #eef2ff;
+        color: #4e73df;
+        padding: 3px 8px;
+        border-radius: 5px;
+        font-weight: 600;
+    }
+
+    .actions { display: flex; gap: 6px; }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #9ca3af;
+    }
+
+    .empty-state p { margin-top: 8px; font-size: 14px; }
+</style>
+
+<div class="page-header">
+    <h1>Assets</h1>
+    <a href="/add-asset" class="btn-primary">➕ Add Asset</a>
+</div>
+
+<div class="table-card">
+    <div class="table-search">
+        <input type="text" id="searchInput" placeholder="Search assets..." onkeyup="filterTable()">
+    </div>
+
+    {% if assets %}
+    <table id="assetsTable">
+        <thead>
+            <tr>
+                <th>Asset Tag</th>
+                <th>Name</th>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asset in assets %}
+            <tr>
+                <td><span class="asset-tag">{{ asset.asset_tag }}</span></td>
+                <td><strong>{{ asset.name }}</strong></td>
+                <td>{{ asset.brand or '—' }}</td>
+                <td>{{ asset.model or '—' }}</td>
+                <td>
+                    {% if asset.status == 'Active' %}
+                        <span class="badge-status badge-active">Active</span>
+                    {% elif asset.status == 'Inactive' %}
+                        <span class="badge-status badge-inactive">Inactive</span>
+                    {% else %}
+                        <span class="badge-status badge-maintenance">Maintenance</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="actions">
+                        <a href="/edit-asset/{{ asset.id }}">
+                            <button class="btn-warning">Edit</button>
+                        </a>
+                        <a href="/delete-asset/{{ asset.id }}"
+                           onclick="return confirm('Delete this asset?')">
+                            <button class="btn-danger">Delete</button>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>No assets registered yet. <a href="/add-asset">Add the first one</a>.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function filterTable() {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#assetsTable tbody tr');
+    rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(input) ? '' : 'none';
+    });
+}
+</script>
 
 {% endblock %}

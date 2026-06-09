@@ -306,6 +306,34 @@ def export_assets():
 
     return send_file(filename, as_attachment=True)
 
+@app.route('/interventions/complete/<int:id>')
+def complete_intervention(id):
+
+    if 'user' not in session:
+        return redirect('/login')
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Busca o asset_id da intervenção
+    cursor.execute("SELECT asset_id FROM interventions WHERE id=%s", (id,))
+    intervention = cursor.fetchone()
+
+    if intervention:
+        # Muda o asset para Active
+        cursor.execute(
+            "UPDATE assets SET status='Active' WHERE id=%s",
+            (intervention['asset_id'],)
+        )
+        # Apaga a intervenção
+        cursor.execute("DELETE FROM interventions WHERE id=%s", (id,))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return redirect('/interventions')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
