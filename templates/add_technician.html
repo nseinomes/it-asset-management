@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Add Technician{% endblock %}
+
+{% block content %}
+
+<style>
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1f2e;
+        margin-bottom: 30px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        max-width: 500px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #1a1f2e;
+        font-size: 14px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 14px;
+        width: 100%;
+        margin-bottom: 16px;
+        font-family: inherit;
+    }
+
+    .form-control:focus {
+        border-color: #4e73df;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(78,115,223,0.1);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 24px;
+    }
+
+    .btn-primary {
+        background: #4e73df;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        flex: 1;
+    }
+
+    .btn-primary:hover {
+        background: #2e59d9;
+    }
+
+    .btn-secondary {
+        background: #e9ecef;
+        color: #495057;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        flex: 1;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-secondary:hover {
+        background: #dee2e6;
+    }
+</style>
+
+<div class="page-title">Add Technician</div>
+
+<div class="form-card">
+    <form method="POST">
+        <label class="form-label">Name *</label>
+        <input type="text" name="name" class="form-control" placeholder="e.g., João Silva" required>
+
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" placeholder="email@example.com">
+
+        <label class="form-label">Phone</label>
+        <input type="tel" name="phone" class="form-control" placeholder="e.g., 912 000 001">
+
+        <div class="form-actions">
+            <a href="/technicians" class="btn-secondary">Cancel</a>
+            <button type="submit" class="btn-primary">Create Technician</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

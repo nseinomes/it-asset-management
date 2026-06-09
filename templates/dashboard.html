@@ -81,6 +81,7 @@
         padding: 20px 24px;
         border: 1px solid #e5e7eb;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        margin-bottom: 24px;
     }
 
     .quick-card h2 {
@@ -124,6 +125,26 @@
     }
 
     .quick-link.ghost:hover { background: #e9ecef; color: #374151; }
+
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .chart-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1a1f2e;
+        margin-bottom: 20px;
+    }
+
+    .chart-wrapper {
+        position: relative;
+        height: 300px;
+    }
 </style>
 
 <div class="page-title">Dashboard</div>
@@ -156,6 +177,13 @@
     </div>
 </div>
 
+<div class="chart-container" style="margin-bottom: 24px;">
+    <div class="chart-title">Assets by Status</div>
+    <div class="chart-wrapper">
+        <canvas id="assetsChart"></canvas>
+    </div>
+</div>
+
 <div class="quick-card">
     <h2>Quick Actions</h2>
     <div class="quick-links">
@@ -165,5 +193,51 @@
         <a href="/reports"       class="quick-link ghost">📄 Reports</a>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    fetch('/api/assets-by-status')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('assetsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Number of Assets',
+                        data: data.data,
+                        backgroundColor: [
+                            '#4e73df',
+                            '#1cc88a',
+                            '#f6c23e'
+                        ],
+                        borderColor: [
+                            '#2e59d9',
+                            '#17a2b8',
+                            '#dda20a'
+                        ],
+                        borderWidth: 1,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: Math.max(...data.data) + 2
+                        }
+                    }
+                }
+            });
+        });
+</script>
 
 {% endblock %}

@@ -30,20 +30,43 @@
     .table-search {
         padding: 16px 20px;
         border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
     }
 
-    .table-search input {
-        width: 280px;
+    .table-search input,
+    .table-search select {
         padding: 8px 14px;
         border: 1px solid #e5e7eb;
         border-radius: 7px;
         font-size: 13px;
         outline: none;
         font-family: 'Inter', sans-serif;
+        background: white;
     }
 
-    .table-search input:focus {
+    .table-search input:focus,
+    .table-search select:focus {
         border-color: #4e73df;
+    }
+
+    .table-search input {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .table-search select {
+        min-width: 120px;
+    }
+
+    .filter-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     table {
@@ -107,6 +130,15 @@
 <div class="table-card">
     <div class="table-search">
         <input type="text" id="searchInput" placeholder="Search assets..." onkeyup="filterTable()">
+        <select id="statusFilter" onchange="filterTable()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="maintenance">Maintenance</option>
+        </select>
+        <select id="brandFilter" onchange="filterTable()">
+            <option value="">All Brands</option>
+        </select>
     </div>
 
     {% if assets %}
@@ -123,9 +155,9 @@
         </thead>
         <tbody>
             {% for asset in assets %}
-            <tr>
+            <tr data-status="{{ asset.status|lower|replace(' ', '-') }}" data-brand="{{ asset.brand|lower or 'unknown' }}">
                 <td><span class="asset-tag">{{ asset.asset_tag }}</span></td>
-                <td><strong>{{ asset.name }}</strong></td>
+                <td><strong><a href="/asset/{{ asset.id }}" style="color: #374151; text-decoration: none; cursor: pointer;">{{ asset.name }}</a></strong></td>
                 <td>{{ asset.brand or '—' }}</td>
                 <td>{{ asset.model or '—' }}</td>
                 <td>
@@ -139,6 +171,9 @@
                 </td>
                 <td>
                     <div class="actions">
+                        <a href="/asset/{{ asset.id }}">
+                            <button class="btn-warning">View</button>
+                        </a>
                         <a href="/edit-asset/{{ asset.id }}">
                             <button class="btn-warning">Edit</button>
                         </a>
@@ -161,12 +196,41 @@
 
 <script>
 function filterTable() {
-    const input = document.getElementById('searchInput').value.toLowerCase();
+    const searchInput = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+    const brandFilter = document.getElementById('brandFilter').value.toLowerCase();
     const rows = document.querySelectorAll('#assetsTable tbody tr');
+    
+    // Populate brand filter on first load
+    if (brandFilter === '' && document.getElementById('brandFilter').options.length === 1) {
+        const brands = new Set();
+        rows.forEach(row => {
+            const brand = row.dataset.brand;
+            if (brand && brand !== 'unknown') brands.add(brand);
+        });
+        brands.forEach(brand => {
+            const option = document.createElement('option');
+            option.value = brand;
+            option.textContent = brand.charAt(0).toUpperCase() + brand.slice(1);
+            document.getElementById('brandFilter').appendChild(option);
+        });
+    }
+    
     rows.forEach(row => {
-        row.style.display = row.textContent.toLowerCase().includes(input) ? '' : 'none';
+        const text = row.textContent.toLowerCase();
+        const status = row.dataset.status;
+        const brand = row.dataset.brand;
+        
+        const matchesSearch = text.includes(searchInput);
+        const matchesStatus = statusFilter === '' || status === statusFilter;
+        const matchesBrand = brandFilter === '' || brand === brandFilter;
+        
+        row.style.display = matchesSearch && matchesStatus && matchesBrand ? '' : 'none';
     });
 }
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', filterTable);
 </script>
 
 {% endblock %}
