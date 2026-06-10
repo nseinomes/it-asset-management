@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Technicians{% endblock %}
+
+{% block content %}
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a1f2e;
+        margin: 0;
+    }
+
+    .layout {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 20px;
+        align-items: start;
+    }
+
+    .table-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead th {
+        padding: 11px 18px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f8f9ff; }
+
+    tbody td {
+        padding: 13px 18px;
+        font-size: 13.5px;
+        color: #374151;
+    }
+
+    .tech-avatar {
+        width: 32px;
+        height: 32px;
+        background: #eef2ff;
+        color: #4e73df;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 13px;
+        margin-right: 10px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .form-card h2 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1f2e;
+        margin: 0 0 16px;
+    }
+
+    .form-card label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+
+    .form-card input {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 7px;
+        font-size: 13.5px;
+        margin-bottom: 14px;
+        font-family: 'Inter', sans-serif;
+        outline: none;
+    }
+
+    .form-card input:focus { border-color: #4e73df; }
+
+    .btn-delete {
+        background: none;
+        border: none;
+        color: #e74c3c;
+        cursor: pointer;
+        font-size: 13px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: 0.2s;
+    }
+
+    .btn-delete:hover { background: #fdecea; }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #9ca3af;
+        font-size: 13px;
+    }
+</style>
+
+<div class="page-header">
+    <h1>Technicians</h1>
+</div>
+
+<div class="layout">
+    <div class="table-card">
+        {% if technicians %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tech in technicians %}
+                <tr>
+                    <td>
+                        <span class="tech-avatar">{{ tech.name[0].upper() }}</span>
+                        <strong>{{ tech.name }}</strong>
+                    </td>
+                    <td>{{ tech.email or '—' }}</td>
+                    <td>{{ tech.phone or '—' }}</td>
+                    <td>
+                        <a href="/technicians/delete/{{ tech.id }}"
+                           onclick="return confirm('Delete {{ tech.name }}?')">
+                            <button class="btn-delete">Delete</button>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">No technicians yet.</div>
+        {% endif %}
+    </div>
+
+    <div class="form-card">
+        <h2>Add Technician</h2>
+        <form method="POST" action="/technicians/add">
+            <label>Name *</label>
+            <input type="text" name="name" placeholder="Full name" required>
+
+            <label>Email</label>
+            <input type="email" name="email" placeholder="email@evolve.com">
+
+            <label>Phone</label>
+            <input type="text" name="phone" placeholder="912 000 000">
+
+            <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">
+                Add Technician
+            </button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
