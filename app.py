@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session, send_file,
 from flask import Flask, render_template, request, redirect, session, send_file, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from database import get_connection
+from rbac import RBACManager
 from datetime import date, datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash, datetime, timedelta
 from functools import wraps
@@ -12,6 +13,16 @@ app = Flask(__name__)
 app.secret_key = "evolve_secret_key"
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+
+# RBAC Manager initialization
+rbac_manager = None
+
+def init_rbac():
+    """Initialize RBAC Manager"""
+    global rbac_manager
+    conn = get_connection()
+    rbac_manager = RBACManager(conn)
+    return rbac_manager
 
 @app.before_request
 def before_request():
@@ -25,6 +36,78 @@ def login_required(f):
             return redirect('/login')
         return f(*args, **kwargs)
     return decorated_function
+
+# RBAC Decorators
+
+def admin_required(f):
+    """Decorator: Admin role required"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return redirect('/login')
+        user_id = session.get('user_id')
+        if not rbac_manager.has_permission(user_id, 'admin'):
+            return render_template('403.html', message='Admin access required'), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+def technician_required(f):
+    """Decorator: Technician or Admin role required"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return redirect('/login')
+        user_id = session.get('user_id')
+        if not rbac_manager.has_permission(user_id, 'technician') and \
+           not rbac_manager.has_permission(user_id, 'admin'):
+            return render_template('403.html', message='Technician access required'), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+def require_permission(permission_name):
+    """Decorator: Require specific permission"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user' not in session:
+                return redirect('/login')
+            user_id = session.get('user_id')
+            if not rbac_manager.has_permission(user_id, permission_name):
+                return render_template('403.html', message=f'Permission required: {permission_name}'), 403
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+# Helper functions
+
+def get_current_user_role():
+    """Get current user's role information"""
+    if 'user_id' not in session:
+        return None
+    return rbac_manager.get_user_role(session['user_id'])
+
+def user_has_permission(permission_name):
+    """Check if current user has permission (for templates)"""
+    if 'user_id' not in session:
+        return False
+    return rbac_manager.has_permission(session['user_id'], permission_name)
+
+def current_user_can(action, entity_type):
+    """Combined permission check: entity_type.action"""
+    permission = f"{entity_type}.{action}"
+    return user_has_permission(permission)
+
+# Context processor for templates
+@app.context_processor
+def inject_permissions():
+    """Make RBAC helpers available to all templates"""
+    return {
+        'user_role': get_current_user_role(),
+        'user_has_permission': user_has_permission,
+        'user_can': current_user_can,
+    }
+
+
 app.permanent_session_lifetime = timedelta(minutes=30)
 
 
@@ -73,6 +156,8 @@ def login():
         if user and check_password_hash(user['password'], password):
             session['user'] = user['username']
             session['user_id'] = user['id']
+            # Initialize RBAC on login
+            init_rbac()
             session['last_activity'] = datetime.now().isoformat()
             return redirect('/dashboard')
 
@@ -786,4 +871,6 @@ def internal_error(error):
 
 
 if __name__ == '__main__':
+    # Initialize RBAC on app startup
+    init_rbac()
     app.run(debug=True)

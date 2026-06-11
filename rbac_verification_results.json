@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-06-09T17:20:17.984641",
+  "status": "success",
+  "checks": {
+    "tables_exist": true,
+    "table_structure": true,
+    "foreign_keys": true,
+    "data_integrity": true,
+    "indices": true,
+    "permissions_sample": true
+  },
+  "errors": []
+}
