@@ -1,3 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>404 - Not Found</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            background: #f0f2f5;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .box {
+            background: white;
+            border-radius: 16px;
+            padding: 50px 60px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e5e7eb;
+        }
+
+        .code {
+            font-size: 72px;
+            font-weight: 700;
+            color: #4e73df;
+            line-height: 1;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 20px;
+            color: #1a1f2e;
+            margin: 0 0 8px;
+        }
+
+        p {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0 0 28px;
+        }
+
+        a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #4e73df;
+            color: white;
+            text-decoration: none;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        a:hover { background: #2e59d9; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <div class="code">404</div>
+        <h1>Page not found</h1>
+        <p>The page you're looking for doesn't exist or was moved.</p>
+        <a href="/dashboard">← Back to Dashboard</a>
+    </div>
+</body>
+</html>
 {% extends "base.html" %}
 
 {% block title %}404 - Page Not Found{% endblock %}
