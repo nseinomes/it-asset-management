@@ -2,6 +2,13 @@
 
 {% block content %}
 
+{% for msg in get_flashed_messages() %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ msg }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+
 <style>
     .interventions-header {
         display: flex;
@@ -223,6 +230,45 @@
         <p>No interventions registered yet.</p>
     </div>
     {% endif %}
+</div>
+
+<div class="mt-4">
+    <button class="btn btn-secondary btn-sm" type="button"
+            data-bs-toggle="collapse" data-bs-target="#historyCollapse">
+        📋 History ({{ completed_interventions|length }})
+    </button>
+    <div class="collapse mt-3" id="historyCollapse">
+        <div class="table-card">
+            {% if completed_interventions %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Technician</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in completed_interventions %}
+                    <tr>
+                        <td><span class="badge-asset">{{ i.asset_tag }}</span> {{ i.asset_name }}</td>
+                        <td>{{ i.technician_name }}</td>
+                        <td>{{ i.description }}</td>
+                        <td>{{ i.intervention_date }}</td>
+                        <td><span class="badge-status badge-completed">{{ i.status }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <p>No completed interventions recorded.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 {% endblock %}

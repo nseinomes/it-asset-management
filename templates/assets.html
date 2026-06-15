@@ -131,7 +131,73 @@
         padding: 60px 20px;
         color: #9ca3af;
     }
+
+    /* Pagination bar */
+    .pagination-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 20px;
+        border-top: 1px solid #f0f0f0;
+        font-size: 13px;
+        color: #6b7280;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .pagination-links {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .pagination-links a,
+    .pagination-links span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        height: 32px;
+        padding: 0 8px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: 0.15s;
+    }
+
+    .pagination-links a {
+        border: 1px solid #e5e7eb;
+        color: #374151;
+        background: white;
+    }
+
+    .pagination-links a:hover {
+        background: #eef2ff;
+        border-color: #4e73df;
+        color: #4e73df;
+    }
+
+    .pagination-links a.current-page {
+        background: #4e73df;
+        border-color: #4e73df;
+        color: white;
+    }
+
+    .pagination-links span.disabled {
+        border: 1px solid #e5e7eb;
+        color: #d1d5db;
+        background: #f9fafb;
+        cursor: not-allowed;
+    }
 </style>
+
+{% for msg in get_flashed_messages() %}
+<div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+    {{ msg }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
 
 <div class="page-header">
     <h1>Assets</h1>
@@ -139,18 +205,41 @@
 </div>
 
 <div class="table-card">
-    <div class="table-toolbar">
-        <input type="text" id="searchInput" placeholder="🔍 Search assets..." onkeyup="filterTable()">
-        <select id="statusFilter" onchange="filterTable()">
+    <!-- Server-side filter form — submits GET to /assets, resets page to 1 automatically -->
+    <form method="GET" action="/assets" class="table-toolbar">
+        <input
+            type="text"
+            name="search"
+            placeholder="🔍 Search assets..."
+            value="{{ filter_search }}">
+        <select name="status">
             <option value="">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Maintenance">Maintenance</option>
-            <option value="Inactive">Inactive</option>
+            <option value="Active"      {% if filter_status == 'Active' %}selected{% endif %}>Active</option>
+            <option value="Maintenance" {% if filter_status == 'Maintenance' %}selected{% endif %}>Maintenance</option>
+            <option value="Inactive"    {% if filter_status == 'Inactive' %}selected{% endif %}>Inactive</option>
         </select>
-        <select id="brandFilter" onchange="filterTable()">
+        <select name="category">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat.name }}" {% if filter_category == cat.name %}selected{% endif %}>
+                {{ cat.name }}
+            </option>
+            {% endfor %}
+        </select>
+        <select name="brand">
             <option value="">All Brands</option>
+            {% for b in brands %}
+            <option value="{{ b }}" {% if filter_brand == b %}selected{% endif %}>
+                {{ b }}
+            </option>
+            {% endfor %}
         </select>
-    </div>
+        <button type="submit" class="filter-btn active">Apply</button>
+        <a href="/assets" class="filter-btn">Clear</a>
+        <span style="margin-left: 12px; color: #6c757d; font-size: 0.9em;">
+            {{ total_count }} asset(s)
+        </span>
+    </form>
 
     {% if assets %}
     <table id="assetsTable">
@@ -166,7 +255,7 @@
         </thead>
         <tbody>
             {% for asset in assets %}
-            <tr data-status="{{ asset.status }}" data-brand="{{ asset.brand or '' }}">
+            <tr>
                 <td><span class="asset-tag">{{ asset.asset_tag }}</span></td>
                 <td><strong>{{ asset.name }}</strong></td>
                 <td>
@@ -199,43 +288,68 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <!-- Pagination Bar -->
+    {% if total_pages > 1 %}
+    <div class="pagination-bar">
+        <span>
+            Page {{ page }} of {{ total_pages }}
+        </span>
+        <nav class="pagination-links" aria-label="Asset pagination">
+            {# Previous link — disabled on page 1 #}
+            {% if page <= 1 %}
+                <span class="disabled" aria-disabled="true">‹ Prev</span>
+            {% else %}
+                <a href="/assets?page={{ page - 1 }}&status={{ filter_status }}&search={{ filter_search }}&category={{ filter_category }}&brand={{ filter_brand }}"
+                   aria-label="Previous page">‹ Prev</a>
+            {% endif %}
+
+            {# Page number links: current ± 1 #}
+            {% set start_page = [1, page - 1] | max %}
+            {% set end_page   = [total_pages, page + 1] | min %}
+
+            {% if start_page > 1 %}
+                <a href="/assets?page=1&status={{ filter_status }}&search={{ filter_search }}&category={{ filter_category }}&brand={{ filter_brand }}">1</a>
+                {% if start_page > 2 %}
+                    <span style="padding: 0 4px; color: #9ca3af;">…</span>
+                {% endif %}
+            {% endif %}
+
+            {% for p in range(start_page, end_page + 1) %}
+                {% if p == page %}
+                    <a class="current-page" aria-current="page">{{ p }}</a>
+                {% else %}
+                    <a href="/assets?page={{ p }}&status={{ filter_status }}&search={{ filter_search }}&category={{ filter_category }}&brand={{ filter_brand }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if end_page < total_pages %}
+                {% if end_page < total_pages - 1 %}
+                    <span style="padding: 0 4px; color: #9ca3af;">…</span>
+                {% endif %}
+                <a href="/assets?page={{ total_pages }}&status={{ filter_status }}&search={{ filter_search }}&category={{ filter_category }}&brand={{ filter_brand }}">{{ total_pages }}</a>
+            {% endif %}
+
+            {# Next link — disabled on last page #}
+            {% if page >= total_pages %}
+                <span class="disabled" aria-disabled="true">Next ›</span>
+            {% else %}
+                <a href="/assets?page={{ page + 1 }}&status={{ filter_status }}&search={{ filter_search }}&category={{ filter_category }}&brand={{ filter_brand }}"
+                   aria-label="Next page">Next ›</a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+
     {% else %}
     <div class="empty-state">
-        <p>No assets yet. <a href="/add-asset">Add the first one</a>.</p>
+        {% if filter_search or filter_status or filter_category or filter_brand %}
+            <p>No assets match the current filters. <a href="/assets">Clear filters</a>.</p>
+        {% else %}
+            <p>No assets yet. <a href="/add-asset">Add the first one</a>.</p>
+        {% endif %}
     </div>
     {% endif %}
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    // Preenche o filtro de marcas automaticamente
-    const brands = new Set();
-    document.querySelectorAll('#assetsTable tbody tr').forEach(row => {
-        const brand = row.dataset.brand;
-        if (brand) brands.add(brand);
-    });
-
-    const brandSelect = document.getElementById('brandFilter');
-    brands.forEach(brand => {
-        const option = document.createElement('option');
-        option.value = brand;
-        option.textContent = brand;
-        brandSelect.appendChild(option);
-    });
-});
-
-function filterTable() {
-    const search  = document.getElementById('searchInput').value.toLowerCase();
-    const status  = document.getElementById('statusFilter').value;
-    const brand   = document.getElementById('brandFilter').value;
-
-    document.querySelectorAll('#assetsTable tbody tr').forEach(row => {
-        const matchSearch = row.textContent.toLowerCase().includes(search);
-        const matchStatus = status === '' || row.dataset.status === status;
-        const matchBrand  = brand === '' || row.dataset.brand === brand;
-        row.style.display = matchSearch && matchStatus && matchBrand ? '' : 'none';
-    });
-}
-</script>
 
 {% endblock %}

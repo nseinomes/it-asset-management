@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Category{% endblock %}
+
+{% block content %}
+
+<style>
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1f2e;
+        margin-bottom: 30px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        max-width: 500px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #1a1f2e;
+        font-size: 14px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 14px;
+        width: 100%;
+        margin-bottom: 16px;
+        font-family: inherit;
+        box-sizing: border-box;
+        background: white;
+    }
+
+    .form-control:focus {
+        border-color: #4e73df;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(78,115,223,0.1);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 24px;
+    }
+
+    .btn-primary {
+        background: #4e73df;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        flex: 1;
+    }
+
+    .btn-primary:hover {
+        background: #2e59d9;
+    }
+
+    .btn-secondary {
+        background: #e9ecef;
+        color: #495057;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        flex: 1;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-secondary:hover {
+        background: #dee2e6;
+    }
+
+    .alert-error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #b91c1c;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="page-title">Edit Category</div>
+
+<div class="form-card">
+    {% if error %}
+    <div class="alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/categories/edit/{{ category.id }}">
+        <label class="form-label">Name *</label>
+        <input type="text" name="name" class="form-control"
+               value="{{ category.name }}" maxlength="100" required
+               placeholder="Category name">
+
+        <div class="form-actions">
+            <a href="/categories" class="btn-secondary">Cancel</a>
+            <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
