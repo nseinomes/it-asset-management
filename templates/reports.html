@@ -1,94 +1,117 @@
 {% extends "base.html" %}
-
 {% block title %}Reports{% endblock %}
 
 {% block content %}
 
 <style>
-    .page-header {
-        margin-bottom: 24px;
-    }
-
-    .page-header h1 {
-        font-size: 22px;
-        font-weight: 700;
-        color: #1a1f2e;
-        margin: 0;
-    }
-
-    .stats-row {
-        display: flex;
-        gap: 16px;
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 14px;
         margin-bottom: 28px;
-        flex-wrap: wrap;
     }
 
     .stat-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px 24px;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        min-width: 180px;
+        background: var(--surface);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        padding: 18px 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-accent {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        border-radius: var(--radius) var(--radius) 0 0;
     }
 
     .stat-label {
-        font-size: 11px;
+        font-size: 10.5px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.8px;
-        color: #9ca3af;
-        margin-bottom: 8px;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+        margin-top: 2px;
     }
 
     .stat-value {
-        font-size: 34px;
+        font-size: 30px;
         font-weight: 700;
-        color: #4e73df;
+        line-height: 1;
+    }
+
+    .export-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
     }
 
     .export-card {
-        background: white;
-        border-radius: 12px;
-        padding: 24px;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        max-width: 420px;
+        background: var(--surface);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        padding: 22px 24px;
     }
 
     .export-card h2 {
-        font-size: 15px;
-        font-weight: 600;
-        color: #1a1f2e;
-        margin: 0 0 6px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 6px;
     }
 
     .export-card p {
         font-size: 13px;
-        color: #6b7280;
-        margin: 0 0 16px;
+        color: var(--text-muted);
+        margin-bottom: 18px;
+        line-height: 1.6;
     }
 </style>
 
 <div class="page-header">
     <h1>Reports</h1>
+    <span style="font-size:13px; color:var(--text-muted);">Asset overview &amp; exports</span>
 </div>
 
-<div class="stats-row">
+<div class="stats-grid">
     <div class="stat-card">
+        <div class="stat-accent" style="background:var(--brand);"></div>
         <div class="stat-label">Total Assets</div>
-        <div class="stat-value">{{ total_assets }}</div>
+        <div class="stat-value" style="color:var(--brand);">{{ total_assets }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-label">Active Assets</div>
-        <div class="stat-value" style="color:#1cc88a;">{{ active_assets }}</div>
+        <div class="stat-accent" style="background:#059669;"></div>
+        <div class="stat-label">Active</div>
+        <div class="stat-value" style="color:#059669;">{{ active_assets }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-accent" style="background:#d97706;"></div>
+        <div class="stat-label">Maintenance</div>
+        <div class="stat-value" style="color:#d97706;">{{ maintenance_assets }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-accent" style="background:#dc2626;"></div>
+        <div class="stat-label">Inactive</div>
+        <div class="stat-value" style="color:#dc2626;">{{ inactive_assets }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-accent" style="background:#7c3aed;"></div>
+        <div class="stat-label">Interventions Done</div>
+        <div class="stat-value" style="color:#7c3aed;">{{ completed_interventions }}</div>
     </div>
 </div>
 
-<div class="export-card">
-    <h2>Export Assets</h2>
-    <p>Download all assets as a CSV file for use in Excel or other tools.</p>
-    <a href="/export-assets" class="btn-primary">⬇️ Export CSV</a>
+<div class="export-section">
+    <div class="export-card">
+        <h2>📥 Export Assets to CSV</h2>
+        <p>Download a full list of all assets including category, status, location, purchase and warranty dates. Opens in Excel, Google Sheets, or any spreadsheet app.</p>
+        <a href="/export-assets" class="btn-primary">Download .csv</a>
+    </div>
 </div>
 
 {% endblock %}

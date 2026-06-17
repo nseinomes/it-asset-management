@@ -1,17 +1,72 @@
 from flask import Flask, render_template, request, redirect, session, send_file, flash
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 from database import get_connection
 from app_utils import log_action
 from datetime import date, datetime, timedelta
 from math import ceil
 import bcrypt
 import os
-import pandas as pd
 import io
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'evolve_secret_key_dev')
 app.permanent_session_lifetime = timedelta(minutes=30)
+
+# ── Role IDs (mirrors the `roles` table) ─────────────────────────
+ROLE_ADMIN      = 1
+ROLE_TECHNICIAN = 2
+ROLE_USER       = 3
+
+# ── Permissions granted to each role ─────────────────────────────
+ROLE_PERMS = {
+    ROLE_ADMIN: {
+        'asset.view', 'asset.create', 'asset.edit', 'asset.delete',
+        'intervention.view', 'intervention.create', 'intervention.edit',
+        'intervention.delete',
+        'technician.manage',
+        'user.manage',
+        'audit.view',
+        'category.manage',
+    },
+    ROLE_TECHNICIAN: {
+        'asset.view', 'asset.create', 'asset.edit',
+        'intervention.view', 'intervention.create', 'intervention.edit',
+        'technician.manage',
+    },
+    ROLE_USER: {
+        'asset.view',
+        'intervention.view',
+    },
+}
+
+
+def has_perm(perm: str) -> bool:
+    """Return True when the logged-in user has *perm* based on their role."""
+    role_id = session.get('role_id', 0)
+    return perm in ROLE_PERMS.get(role_id, set())
+
+
+def require_perm(perm: str):
+    """Decorator – redirects with a flash message when *perm* is missing."""
+    from functools import wraps
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            if 'user' not in session:
+                return redirect('/login')
+            if not has_perm(perm):
+                flash('You do not have permission to perform this action.')
+                return redirect('/dashboard')
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
+
+
+# Expose has_perm to every Jinja2 template so templates can use
+# {% if has_perm('asset.edit') %}
+@app.context_processor
+def inject_permissions():
+    return {'has_perm': has_perm, 'session_role': session.get('role_id', 0)}
 
 
 # ── Session timeout ──────────────────────────────────────────────
@@ -25,6 +80,19 @@ def check_session_timeout():
                 session.clear()
                 return redirect('/login')
         session['last_activity'] = datetime.now().isoformat()
+
+        # Back-fill role_id for sessions that pre-date the RBAC addition
+        if 'role_id' not in session and 'user_id' in session:
+            try:
+                conn = get_connection()
+                cur  = conn.cursor()
+                cur.execute("SELECT role_id FROM users WHERE id = %s", (session['user_id'],))
+                row = cur.fetchone()
+                cur.close()
+                conn.close()
+                session['role_id'] = (row['role_id'] if row and row['role_id'] else 0)
+            except Exception:
+                session['role_id'] = 0
 
 
 # ── Home ─────────────────────────────────────────────────────────
@@ -47,10 +115,22 @@ def login():
         cursor.close()
         conn.close()
 
-        if user and check_password_hash(user['password'], password):
+        if user and user['password']:
+            stored = user['password']
+            # Passwords created via bcrypt start with '$2b$' or '$2a$'
+            if stored.startswith('$2b$') or stored.startswith('$2a$'):
+                password_ok = bcrypt.checkpw(password.encode(), stored.encode())
+            else:
+                # Legacy accounts created with Werkzeug generate_password_hash
+                password_ok = check_password_hash(stored, password)
+        else:
+            password_ok = False
+
+        if password_ok:
             session.permanent = True
-            session['user'] = user['username']
+            session['user']    = user['username']
             session['user_id'] = user['id']
+            session['role_id'] = user.get('role_id') or 0
             session['last_activity'] = datetime.now().isoformat()
             return redirect('/dashboard')
 
@@ -86,6 +166,28 @@ def dashboard():
     cursor.execute("SELECT COUNT(*) FROM interventions WHERE status='Completed'")
     completed_interventions = cursor.fetchone()['COUNT(*)']
 
+    # Warranty alerts
+    cursor.execute("""
+        SELECT COUNT(*) FROM assets
+        WHERE warranty_expiration IS NOT NULL
+          AND warranty_expiration BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+    """)
+    expiring_30 = cursor.fetchone()['COUNT(*)']
+
+    cursor.execute("""
+        SELECT COUNT(*) FROM assets
+        WHERE warranty_expiration IS NOT NULL
+          AND warranty_expiration BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 60 DAY)
+    """)
+    expiring_60 = cursor.fetchone()['COUNT(*)']
+
+    cursor.execute("""
+        SELECT COUNT(*) FROM assets
+        WHERE warranty_expiration IS NOT NULL
+          AND warranty_expiration < CURDATE()
+    """)
+    expired = cursor.fetchone()['COUNT(*)']
+
     cursor.close()
     conn.close()
 
@@ -96,7 +198,10 @@ def dashboard():
         maintenance_assets=maintenance_assets,
         inactive_assets=inactive_assets,
         total_interventions=total_interventions,
-        completed_interventions=completed_interventions
+        completed_interventions=completed_interventions,
+        expiring_30=expiring_30,
+        expiring_60=expiring_60,
+        expired=expired,
     )
 
 
@@ -232,9 +337,8 @@ def asset_detail(id):
 
 
 @app.route('/add-asset', methods=['GET', 'POST'])
+@require_perm('asset.create')
 def add_asset():
-    if 'user' not in session:
-        return redirect('/login')
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -295,9 +399,8 @@ def add_asset():
 
 
 @app.route('/edit-asset/<int:id>', methods=['GET', 'POST'])
+@require_perm('asset.edit')
 def edit_asset(id):
-    if 'user' not in session:
-        return redirect('/login')
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -368,9 +471,8 @@ def edit_asset(id):
 
 
 @app.route('/delete-asset/<int:id>')
+@require_perm('asset.delete')
 def delete_asset(id):
-    if 'user' not in session:
-        return redirect('/login')
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -412,31 +514,55 @@ def interventions():
     if 'user' not in session:
         return redirect('/login')
 
+    # ── Filter params ─────────────────────────────────────────────
+    f_search  = request.args.get('search', '').strip()
+    f_tech    = request.args.get('technician', '').strip()
+    f_date_from = request.args.get('date_from', '').strip()
+    f_date_to   = request.args.get('date_to', '').strip()
+
+    # ── Build active filter WHERE clause ─────────────────────────
+    cond_active  = ["i.status = 'Active'"]
+    cond_history = ["i.status = 'Completed'"]
+    params_active  = []
+    params_history = []
+
+    if f_search:
+        like = f'%{f_search}%'
+        frag = "(a.asset_tag LIKE %s OR a.name LIKE %s OR i.description LIKE %s)"
+        cond_active.append(frag);  params_active.extend([like, like, like])
+        cond_history.append(frag); params_history.extend([like, like, like])
+    if f_tech:
+        cond_active.append("t.id = %s");  params_active.append(f_tech)
+        cond_history.append("t.id = %s"); params_history.append(f_tech)
+    if f_date_from:
+        cond_active.append("i.intervention_date >= %s");  params_active.append(f_date_from)
+        cond_history.append("i.intervention_date >= %s"); params_history.append(f_date_from)
+    if f_date_to:
+        cond_active.append("i.intervention_date <= %s");  params_active.append(f_date_to)
+        cond_history.append("i.intervention_date <= %s"); params_history.append(f_date_to)
+
+    base_select = """
+        SELECT i.id, i.description, i.intervention_date, i.status,
+               a.asset_tag, a.name as asset_name,
+               t.id as technician_id, t.name as technician_name
+        FROM interventions i
+        JOIN assets a ON i.asset_id = a.id
+        JOIN technicians t ON i.technician_id = t.id
+    """
+
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT i.id, i.description, i.intervention_date, i.status,
-               a.asset_tag, a.name as asset_name,
-               t.name as technician_name
-        FROM interventions i
-        JOIN assets a ON i.asset_id = a.id
-        JOIN technicians t ON i.technician_id = t.id
-        WHERE i.status = 'Active'
-        ORDER BY i.intervention_date DESC
-    """)
+    cursor.execute(
+        f"{base_select} WHERE {' AND '.join(cond_active)} ORDER BY i.intervention_date DESC",
+        params_active
+    )
     interventions = cursor.fetchall()
 
-    cursor.execute("""
-        SELECT i.id, i.description, i.intervention_date, i.status,
-               a.asset_tag, a.name as asset_name,
-               t.name as technician_name
-        FROM interventions i
-        JOIN assets a ON i.asset_id = a.id
-        JOIN technicians t ON i.technician_id = t.id
-        WHERE i.status = 'Completed'
-        ORDER BY i.intervention_date DESC
-    """)
+    cursor.execute(
+        f"{base_select} WHERE {' AND '.join(cond_history)} ORDER BY i.intervention_date DESC LIMIT 200",
+        params_history
+    )
     completed_interventions = cursor.fetchall()
 
     cursor.execute("""
@@ -457,14 +583,17 @@ def interventions():
         interventions=interventions,
         completed_interventions=completed_interventions,
         assets=assets,
-        technicians=technicians
+        technicians=technicians,
+        f_search=f_search,
+        f_tech=f_tech,
+        f_date_from=f_date_from,
+        f_date_to=f_date_to,
     )
 
 
 @app.route('/interventions/add', methods=['POST'])
+@require_perm('intervention.create')
 def add_intervention():
-    if 'user' not in session:
-        return redirect('/login')
 
     asset_id      = request.form['asset_id']
     technician_id = request.form['technician_id']
@@ -480,23 +609,22 @@ def add_intervention():
         cursor.close()
         conn.close()
         flash("Asset not found.")
-        return redirect('/interventions'), 404
+        return redirect('/interventions')
 
     if asset['status'] != 'Inactive':
         cursor.close()
         conn.close()
         flash("Asset is not available for intervention.")
-        return redirect('/interventions'), 400
+        return redirect('/interventions')
 
     cursor.execute("""
         INSERT INTO interventions (asset_id, technician_id, description, intervention_date, status)
         VALUES (%s, %s, %s, %s, 'Active')
     """, (asset_id, technician_id, description, date.today()))
 
-    new_intervention_id = cursor.lastrowid
     cursor.execute("UPDATE assets SET status='Maintenance' WHERE id=%s", (asset_id,))
-
     conn.commit()
+    new_intervention_id = cursor.lastrowid
     cursor.close()
     conn.close()
 
@@ -521,9 +649,8 @@ def add_intervention():
 
 
 @app.route('/interventions/complete/<int:id>')
+@require_perm('intervention.edit')
 def complete_intervention(id):
-    if 'user' not in session:
-        return redirect('/login')
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -556,15 +683,21 @@ def complete_intervention(id):
 
 
 @app.route('/interventions/delete/<int:id>')
+@require_perm('intervention.delete')
 def delete_intervention(id):
-    if 'user' not in session:
-        return redirect('/login')
 
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM interventions WHERE id=%s", (id,))
     intervention = cursor.fetchone()
+
+    # If the intervention was still Active, restore the asset to Inactive
+    if intervention and intervention['status'] == 'Active':
+        cursor.execute(
+            "UPDATE assets SET status='Inactive' WHERE id=%s",
+            (intervention['asset_id'],)
+        )
 
     cursor.execute("DELETE FROM interventions WHERE id=%s", (id,))
     conn.commit()
@@ -604,9 +737,8 @@ def technicians():
 
 
 @app.route('/technicians/add', methods=['POST'])
+@require_perm('technician.manage')
 def add_technician():
-    if 'user' not in session:
-        return redirect('/login')
 
     name  = request.form['name']
     email = request.form.get('email', '')
@@ -633,9 +765,8 @@ def add_technician():
 
 
 @app.route('/technicians/delete/<int:id>')
+@require_perm('technician.manage')
 def delete_technician(id):
-    if 'user' not in session:
-        return redirect('/login')
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -658,9 +789,8 @@ def delete_technician(id):
 
 # ── Users ────────────────────────────────────────────────────────
 @app.route('/users')
+@require_perm('user.manage')
 def users():
-    if 'user' not in session:
-        return redirect('/login')
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -683,9 +813,8 @@ def users():
 
 
 @app.route('/users/create', methods=['POST'])
+@require_perm('user.manage')
 def create_user():
-    if 'user' not in session:
-        return redirect('/login')
 
     username = request.form.get('username', '').strip()
     password = request.form.get('password', '')
@@ -763,9 +892,8 @@ def create_user():
 
 
 @app.route('/users/delete/<int:id>')
+@require_perm('user.manage')
 def delete_user(id):
-    if 'user' not in session:
-        return redirect('/login')
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -808,9 +936,8 @@ def delete_user(id):
 
 
 @app.route('/users/edit/<int:id>', methods=['GET', 'POST'])
+@require_perm('user.manage')
 def edit_user(id):
-    if 'user' not in session:
-        return redirect('/login')
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -891,9 +1018,8 @@ def edit_user(id):
 
 # ── Categories ───────────────────────────────────────────────────
 @app.route('/categories')
+@require_perm('category.manage')
 def categories():
-    if 'user' not in session:
-        return redirect('/login')
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -912,9 +1038,8 @@ def categories():
 
 
 @app.route('/categories/create', methods=['POST'])
+@require_perm('category.manage')
 def create_category():
-    if 'user' not in session:
-        return redirect('/login')
 
     name = request.form.get('name', '').strip()
 
@@ -990,9 +1115,8 @@ def create_category():
 
 
 @app.route('/categories/edit/<int:category_id>', methods=['GET', 'POST'])
+@require_perm('category.manage')
 def edit_category(category_id):
-    if 'user' not in session:
-        return redirect('/login')
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -1059,9 +1183,8 @@ def edit_category(category_id):
 
 
 @app.route('/categories/delete/<int:category_id>')
+@require_perm('category.manage')
 def delete_category(category_id):
-    if 'user' not in session:
-        return redirect('/login')
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -1107,25 +1230,51 @@ def delete_category(category_id):
 
 # ── Audit Log ────────────────────────────────────────────────────
 @app.route('/audit-log')
+@require_perm('audit.view')
 def audit_log_view():
-    if 'user' not in session:
-        return redirect('/login')
+
+    f_user   = request.args.get('user', '').strip()
+    f_action = request.args.get('action', '').strip()
+    f_entity = request.args.get('entity', '').strip()
+
+    conds  = ['1=1']
+    params = []
+
+    if f_user:
+        conds.append("u.username LIKE %s")
+        params.append(f'%{f_user}%')
+    if f_action:
+        conds.append("al.action = %s")
+        params.append(f_action)
+    if f_entity:
+        conds.append("al.entity_type = %s")
+        params.append(f_entity)
+
+    where = ' AND '.join(conds)
 
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT al.id, al.timestamp, u.username, al.action,
                al.entity_type, al.entity_id, al.old_value, al.new_value
         FROM audit_log al
         JOIN users u ON al.user_id = u.id
+        WHERE {where}
         ORDER BY al.timestamp DESC
         LIMIT 500
-    """)
+    """, params)
     entries = cursor.fetchall()
+
+    # Distinct entity types for filter dropdown
+    cursor.execute("SELECT DISTINCT entity_type FROM audit_log ORDER BY entity_type")
+    entity_types = [r['entity_type'] for r in cursor.fetchall()]
+
     cursor.close()
     conn.close()
 
-    return render_template('audit_log.html', entries=entries)
+    return render_template('audit_log.html', entries=entries,
+                           entity_types=entity_types,
+                           f_user=f_user, f_action=f_action, f_entity=f_entity)
 
 
 # ── Reports ──────────────────────────────────────────────────────
@@ -1184,25 +1333,26 @@ def export_assets():
     cursor.close()
     conn.close()
 
-    df = pd.DataFrame(rows)
-    df.columns = ['Asset Tag', 'Name', 'Brand', 'Model', 'Serial Number',
-                  'Category', 'Status', 'Location',
-                  'Purchase Date', 'Warranty Expiration', 'Notes']
-
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name='Assets')
-        ws = writer.sheets['Assets']
-        for col in ws.columns:
-            max_len = max(len(str(cell.value or '')) for cell in col) + 4
-            ws.column_dimensions[col[0].column_letter].width = min(max_len, 40)
+    import csv
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Asset Tag', 'Name', 'Brand', 'Model', 'Serial Number',
+                     'Category', 'Status', 'Location',
+                     'Purchase Date', 'Warranty Expiration', 'Notes'])
+    for row in rows:
+        writer.writerow([
+            row['asset_tag'], row['name'], row['brand'], row['model'],
+            row['serial_number'], row['category'], row['status'],
+            row['location'], row['purchase_date'],
+            row['warranty_expiration'], row['notes'],
+        ])
 
     output.seek(0)
     return send_file(
-        output,
+        io.BytesIO(output.getvalue().encode('utf-8-sig')),
         as_attachment=True,
-        download_name=f"assets_report_{date.today()}.xlsx",
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        download_name=f"assets_{date.today()}.csv",
+        mimetype='text/csv'
     )
 
 
@@ -1211,6 +1361,61 @@ def export_assets():
 def logout():
     session.clear()
     return redirect('/login')
+
+
+# ── Profile ──────────────────────────────────────────────────────
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if 'user' not in session:
+        return redirect('/login')
+
+    error   = None
+    success = None
+
+    if request.method == 'POST':
+        current_pw  = request.form.get('current_password', '')
+        new_pw      = request.form.get('new_password', '')
+        confirm_pw  = request.form.get('confirm_password', '')
+
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE id = %s", (session['user_id'],))
+        user = cursor.fetchone()
+
+        # Verify current password
+        if not user:
+            error = 'User not found.'
+        else:
+            stored = user['password']
+            if stored.startswith('$2b$') or stored.startswith('$2a$'):
+                current_ok = bcrypt.checkpw(current_pw.encode(), stored.encode())
+            else:
+                current_ok = check_password_hash(stored, current_pw)
+
+            if not current_ok:
+                error = 'Current password is incorrect.'
+            elif len(new_pw) < 8:
+                error = 'New password must be at least 8 characters.'
+            elif new_pw != confirm_pw:
+                error = 'Passwords do not match.'
+            else:
+                hashed = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
+                cursor.execute(
+                    "UPDATE users SET password = %s WHERE id = %s",
+                    (hashed, session['user_id'])
+                )
+                conn.commit()
+                try:
+                    log_action(session['user_id'], 'UPDATE', 'user', session['user_id'],
+                               new_value={'password': 'changed'})
+                except Exception:
+                    pass
+                success = 'Password updated successfully.'
+
+        cursor.close()
+        conn.close()
+
+    return render_template('profile.html', error=error, success=success)
 
 
 # ── Errors ───────────────────────────────────────────────────────

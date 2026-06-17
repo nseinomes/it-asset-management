@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+
+<style>
+    .form-wrap { max-width: 420px; }
+
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .profile-avatar {
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(135deg, var(--brand) 0%, #7c3aed 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 20px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .profile-name { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+
+    .profile-role {
+        display: inline-block;
+        margin-top: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 9px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .profile-body { padding: 24px; }
+
+    .field { margin-bottom: 16px; }
+
+    .field label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 5px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+    }
+
+    .alert-inline {
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+    .alert-inline.error   { background: #fff1f2; border: 1px solid #fecdd3; color: #be123c; }
+    .alert-inline.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+
+    .divider {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        padding: 0 24px 12px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="page-header">
+    <h1>My Profile</h1>
+</div>
+
+<div class="card-surface form-wrap">
+    <!-- User info header -->
+    <div class="profile-header">
+        <div class="profile-avatar">{{ session.get('user', 'U')[0].upper() }}</div>
+        <div>
+            <div class="profile-name">{{ session.get('user', '') }}</div>
+            {% if session_role == 1 %}
+                <span class="profile-role" style="background:#ede9fe; color:#6d28d9;">Admin</span>
+            {% elif session_role == 2 %}
+                <span class="profile-role" style="background:#dbeafe; color:#1d4ed8;">Technician</span>
+            {% elif session_role == 3 %}
+                <span class="profile-role" style="background:#f0fdf4; color:#15803d;">User</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="profile-body">
+        <div class="divider">Change Password</div>
+
+        {% if error %}
+        <div class="alert-inline error">{{ error }}</div>
+        {% endif %}
+        {% if success %}
+        <div class="alert-inline success">✓ {{ success }}</div>
+        {% endif %}
+
+        <form method="POST" action="/profile">
+            <div class="field">
+                <label>Current Password *</label>
+                <input class="form-input" type="password" name="current_password"
+                       placeholder="Your current password" required>
+            </div>
+            <div class="field">
+                <label>New Password *</label>
+                <input class="form-input" type="password" name="new_password"
+                       placeholder="Min. 8 characters" minlength="8" required>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+                <label>Confirm New Password *</label>
+                <input class="form-input" type="password" name="confirm_password"
+                       placeholder="Repeat new password" required>
+            </div>
+
+            <div class="form-actions">
+                <a href="/dashboard" class="btn-secondary" style="flex:1; justify-content:center;">Cancel</a>
+                <button type="submit" class="btn-primary" style="flex:1; justify-content:center;">
+                    Update Password
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

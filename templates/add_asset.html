@@ -1,49 +1,133 @@
 {% extends "base.html" %}
-
-{% block title %}
-Add Asset
-{% endblock %}
+{% block title %}Add Asset{% endblock %}
 
 {% block content %}
 
-<h1 class="mb-4">Add New Asset</h1>
+<style>
+    .form-wrap { max-width: 700px; }
 
-<form method="POST" class="card p-4 shadow" style="max-width:600px;">
+    .form-section {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin: 24px 0 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+    }
+    .form-section:first-child { margin-top: 0; }
 
-    <div class="mb-3">
-        <label class="form-label">Asset Tag</label>
-        <input type="text" name="asset_tag" class="form-control" required>
-    </div>
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 20px;
+    }
+    .form-grid .span-2 { grid-column: 1 / -1; }
 
-    <div class="mb-3">
-        <label class="form-label">Name</label>
-        <input type="text" name="name" class="form-control" required>
-    </div>
+    .field { margin-bottom: 16px; }
 
-    <div class="mb-3">
-        <label class="form-label">Brand</label>
-        <input type="text" name="brand" class="form-control" required>
-    </div>
+    .field label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 5px;
+    }
 
-    <div class="mb-3">
-        <label class="form-label">Model</label>
-        <input type="text" name="model" class="form-control" required>
-    </div>
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 28px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+    }
+</style>
 
-    <div class="mb-3">
-        <label class="form-label">Status</label>
+<div class="page-header">
+    <h1>Add Asset</h1>
+    <a href="/assets" class="btn-secondary">← Back</a>
+</div>
 
-        <select name="status" class="form-select">
-            <option value="Active">Active</option>
-            <option value="Maintenance">Maintenance</option>
-            <option value="Inactive">Inactive</option>
-        </select>
-    </div>
+<div class="card-surface form-wrap" style="padding: 28px 32px;">
+    <form method="POST" action="/add-asset">
 
-    <button type="submit" class="btn btn-primary">
-        Save Asset
-    </button>
+        <div class="form-section">Basic Info</div>
+        <div class="form-grid">
+            <div class="field">
+                <label>Asset Tag *</label>
+                <input class="form-input" type="text" name="asset_tag" placeholder="e.g. IT-0042" required>
+            </div>
+            <div class="field">
+                <label>Status *</label>
+                <select class="form-input" name="status" style="appearance:auto;">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="Maintenance">Maintenance</option>
+                </select>
+            </div>
+            <div class="field span-2">
+                <label>Name *</label>
+                <input class="form-input" type="text" name="name" placeholder="e.g. Dell Laptop XPS 15" required>
+            </div>
+        </div>
 
-</form>
+        <div class="form-section">Device Details</div>
+        <div class="form-grid">
+            <div class="field">
+                <label>Brand</label>
+                <input class="form-input" type="text" name="brand" placeholder="e.g. Dell, HP, Apple">
+            </div>
+            <div class="field">
+                <label>Model</label>
+                <input class="form-input" type="text" name="model" placeholder="e.g. XPS 15, ThinkPad X1">
+            </div>
+            <div class="field">
+                <label>Serial Number</label>
+                <input class="form-input" type="text" name="serial_number" placeholder="S/N">
+            </div>
+            <div class="field">
+                <label>Category</label>
+                <select class="form-input" name="category_id" style="appearance:auto;">
+                    <option value="">— No category —</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-section">Location & Dates</div>
+        <div class="form-grid">
+            <div class="field">
+                <label>Location</label>
+                <input class="form-input" type="text" name="location" placeholder="e.g. Room 2A, Floor 3">
+            </div>
+            <div class="field">
+                <label>Purchase Date</label>
+                <input class="form-input" type="date" name="purchase_date">
+            </div>
+            <div class="field">
+                <label>Warranty Expiration</label>
+                <input class="form-input" type="date" name="warranty_expiration">
+            </div>
+        </div>
+
+        <div class="form-section">Notes</div>
+        <div class="field">
+            <textarea class="form-input" name="notes" rows="3"
+                      style="resize:vertical;"
+                      placeholder="Additional notes about this asset…"></textarea>
+        </div>
+
+        <div class="form-actions">
+            <a href="/assets" class="btn-secondary">Cancel</a>
+            <button type="submit" class="btn-primary">Save Asset</button>
+        </div>
+
+    </form>
+</div>
 
 {% endblock %}

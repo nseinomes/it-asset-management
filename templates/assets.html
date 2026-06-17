@@ -1,153 +1,111 @@
 {% extends "base.html" %}
 
 {% block title %}Assets{% endblock %}
-
 {% block content %}
 
 <style>
-    .page-header {
+    .toolbar {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-    }
-
-    .page-header h1 {
-        font-size: 22px;
-        font-weight: 700;
-        color: #1a1f2e;
-        margin: 0;
-    }
-
-    .table-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-        overflow: hidden;
-        border: 1px solid #e5e7eb;
-    }
-
-    .table-toolbar {
-        padding: 14px 20px;
-        border-bottom: 1px solid #f0f0f0;
-        display: flex;
-        gap: 10px;
+        gap: 8px;
         flex-wrap: wrap;
         align-items: center;
+        background: #fafbfc;
     }
 
-    .table-toolbar input,
-    .table-toolbar select {
-        padding: 7px 13px;
-        border: 1px solid #e5e7eb;
-        border-radius: 7px;
+    .toolbar input,
+    .toolbar select {
+        padding: 7px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
         font-size: 13px;
         outline: none;
         font-family: 'Inter', sans-serif;
         background: white;
-        color: #374151;
+        color: var(--text-primary);
+        transition: border-color 0.15s;
     }
 
-    .table-toolbar input { width: 220px; }
-    .table-toolbar select { min-width: 130px; }
+    .toolbar input { width: 210px; }
+    .toolbar input:focus,
+    .toolbar select:focus { border-color: var(--brand); }
 
-    .table-toolbar input:focus,
-    .table-toolbar select:focus { border-color: #4e73df; }
-
-    .filter-btn {
+    .filter-apply {
         padding: 7px 14px;
-        border: 1px solid #e5e7eb;
-        border-radius: 7px;
-        background: white;
-        font-size: 12px;
+        border-radius: 8px;
+        background: var(--brand);
+        color: white;
+        border: none;
+        font-size: 12.5px;
         font-weight: 600;
         cursor: pointer;
-        transition: 0.15s;
-        color: #6b7280;
         font-family: 'Inter', sans-serif;
-    }
-
-    .filter-btn:hover { background: #f3f4f6; }
-    .filter-btn.active { background: #4e73df; color: white; border-color: #4e73df; }
-
-    table { width: 100%; border-collapse: collapse; }
-
-    thead th {
-        padding: 11px 18px;
-        text-align: left;
-        font-size: 11px;
-        font-weight: 600;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.7px;
-        background: #f9fafb;
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    tbody tr {
-        border-bottom: 1px solid #f3f4f6;
         transition: background 0.15s;
     }
+    .filter-apply:hover { background: var(--brand-dark); }
 
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: #f8f9ff; }
-
-    tbody td {
-        padding: 12px 18px;
-        font-size: 13.5px;
-        color: #374151;
+    .filter-clear {
+        padding: 7px 14px;
+        border-radius: 8px;
+        background: white;
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+        font-size: 12.5px;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: background 0.15s;
     }
+    .filter-clear:hover { background: #f8fafc; }
 
     .asset-tag {
         font-family: monospace;
         font-size: 12px;
-        background: #eef2ff;
-        color: #4e73df;
+        background: var(--brand-light);
+        color: var(--brand);
         padding: 3px 8px;
-        border-radius: 5px;
-        font-weight: 600;
+        border-radius: 6px;
+        font-weight: 700;
     }
 
-    .actions { display: flex; gap: 6px; }
+    .actions { display: flex; gap: 6px; align-items: center; }
 
     .btn-detail {
-        background: #f3f4f6;
-        color: #374151;
-        border: 1px solid #e5e7eb;
-        padding: 6px 12px;
-        border-radius: 6px;
+        background: #f8fafc;
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+        padding: 5px 11px;
+        border-radius: 7px;
         cursor: pointer;
         font-size: 12px;
         font-weight: 500;
         transition: 0.15s;
         text-decoration: none;
         display: inline-block;
+        font-family: 'Inter', sans-serif;
     }
+    .btn-detail:hover { background: var(--brand-light); color: var(--brand); border-color: #bfdbfe; }
 
-    .btn-detail:hover { background: #eef2ff; color: #4e73df; }
-
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #9ca3af;
-    }
-
-    /* Pagination bar */
+    /* Pagination */
     .pagination-bar {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 12px 20px;
-        border-top: 1px solid #f0f0f0;
+        padding: 12px 16px;
+        border-top: 1px solid var(--border);
         font-size: 13px;
-        color: #6b7280;
+        color: var(--text-muted);
         flex-wrap: wrap;
         gap: 8px;
+        background: #fafbfc;
     }
 
     .pagination-links {
         display: flex;
-        gap: 4px;
+        gap: 3px;
         align-items: center;
     }
 
@@ -159,7 +117,7 @@
         min-width: 32px;
         height: 32px;
         padding: 0 8px;
-        border-radius: 6px;
+        border-radius: 7px;
         font-size: 13px;
         font-weight: 500;
         text-decoration: none;
@@ -167,51 +125,29 @@
     }
 
     .pagination-links a {
-        border: 1px solid #e5e7eb;
-        color: #374151;
+        border: 1px solid var(--border);
+        color: var(--text-primary);
         background: white;
     }
-
-    .pagination-links a:hover {
-        background: #eef2ff;
-        border-color: #4e73df;
-        color: #4e73df;
-    }
-
-    .pagination-links a.current-page {
-        background: #4e73df;
-        border-color: #4e73df;
-        color: white;
-    }
-
-    .pagination-links span.disabled {
-        border: 1px solid #e5e7eb;
-        color: #d1d5db;
-        background: #f9fafb;
-        cursor: not-allowed;
-    }
+    .pagination-links a:hover { background: var(--brand-light); border-color: #bfdbfe; color: var(--brand); }
+    .pagination-links a.current-page { background: var(--brand); border-color: var(--brand); color: white; }
+    .pagination-links span.disabled { border: 1px solid var(--border); color: #cbd5e1; background: #f8fafc; cursor: not-allowed; }
 </style>
 
 {% for msg in get_flashed_messages() %}
-<div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-    {{ msg }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
+<div class="alert-flash error">⚠ {{ msg }}</div>
 {% endfor %}
 
 <div class="page-header">
     <h1>Assets</h1>
-    <a href="/add-asset" class="btn-primary">➕ Add Asset</a>
+    {% if has_perm('asset.create') %}
+    <a href="/add-asset" class="btn-primary">＋ Add Asset</a>
+    {% endif %}
 </div>
 
-<div class="table-card">
-    <!-- Server-side filter form — submits GET to /assets, resets page to 1 automatically -->
-    <form method="GET" action="/assets" class="table-toolbar">
-        <input
-            type="text"
-            name="search"
-            placeholder="🔍 Search assets..."
-            value="{{ filter_search }}">
+<div class="card-surface" style="overflow:hidden;">
+    <form method="GET" action="/assets" class="toolbar">
+        <input type="text" name="search" placeholder="🔍 Search assets…" value="{{ filter_search }}">
         <select name="status">
             <option value="">All Status</option>
             <option value="Active"      {% if filter_status == 'Active' %}selected{% endif %}>Active</option>
@@ -221,28 +157,22 @@
         <select name="category">
             <option value="">All Categories</option>
             {% for cat in categories %}
-            <option value="{{ cat.name }}" {% if filter_category == cat.name %}selected{% endif %}>
-                {{ cat.name }}
-            </option>
+            <option value="{{ cat.name }}" {% if filter_category == cat.name %}selected{% endif %}>{{ cat.name }}</option>
             {% endfor %}
         </select>
         <select name="brand">
             <option value="">All Brands</option>
             {% for b in brands %}
-            <option value="{{ b }}" {% if filter_brand == b %}selected{% endif %}>
-                {{ b }}
-            </option>
+            <option value="{{ b }}" {% if filter_brand == b %}selected{% endif %}>{{ b }}</option>
             {% endfor %}
         </select>
-        <button type="submit" class="filter-btn active">Apply</button>
-        <a href="/assets" class="filter-btn">Clear</a>
-        <span style="margin-left: 12px; color: #6c757d; font-size: 0.9em;">
-            {{ total_count }} asset(s)
-        </span>
+        <button type="submit" class="filter-apply">Apply</button>
+        <a href="/assets" class="filter-clear">Clear</a>
+        <span style="margin-left:8px; font-size:12.5px; color:var(--text-muted);">{{ total_count }} result{{ 's' if total_count != 1 }}</span>
     </form>
 
     {% if assets %}
-    <table id="assetsTable">
+    <table id="assetsTable" class="data-table">
         <thead>
             <tr>
                 <th>Asset Tag</th>
@@ -275,13 +205,15 @@
                 <td>
                     <div class="actions">
                         <a href="/asset/{{ asset.id }}" class="btn-detail">Detail</a>
-                        <a href="/edit-asset/{{ asset.id }}">
-                            <button class="btn-warning">Edit</button>
-                        </a>
-                        <a href="/delete-asset/{{ asset.id }}"
-                           onclick="return confirm('Delete asset {{ asset.asset_tag }}?')">
-                            <button class="btn-danger">Delete</button>
-                        </a>
+                        {% if has_perm('asset.edit') %}
+                        <a href="/edit-asset/{{ asset.id }}" class="btn-warning" style="text-decoration:none;">Edit</a>
+                        {% endif %}
+                        {% if has_perm('asset.delete') %}
+                        <button class="btn-danger" style="font-size:12px; padding:5px 10px; text-decoration:none;"
+                                onclick="openAssetConfirm('{{ asset.id }}', '{{ asset.asset_tag }}')">
+                            Delete
+                        </button>
+                        {% endif %}
                     </div>
                 </td>
             </tr>
@@ -351,5 +283,56 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Confirm delete modal -->
+<style>
+    .confirm-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15,23,42,0.4);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    .confirm-overlay.open { display: flex; }
+    .confirm-box {
+        background: white;
+        border-radius: 14px;
+        padding: 28px 28px 22px;
+        max-width: 380px;
+        width: 90%;
+        box-shadow: 0 8px 32px rgba(15,23,42,0.2);
+    }
+    .confirm-box h3 { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+    .confirm-box p  { font-size: 13.5px; color: #64748b; margin-bottom: 22px; line-height: 1.6; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+</style>
+
+<div class="confirm-overlay" id="assetConfirmOverlay">
+    <div class="confirm-box">
+        <h3>Delete Asset</h3>
+        <p id="assetConfirmMsg">Are you sure you want to delete this asset?</p>
+        <div class="confirm-actions">
+            <button class="btn-secondary"
+                    onclick="document.getElementById('assetConfirmOverlay').classList.remove('open')">
+                Cancel
+            </button>
+            <a id="assetConfirmBtn" href="#" class="btn-danger" style="text-decoration:none;">Delete</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function openAssetConfirm(id, tag) {
+    document.getElementById('assetConfirmMsg').innerHTML =
+        `Delete asset <strong>${tag}</strong>? This cannot be undone.`;
+    document.getElementById('assetConfirmBtn').href = `/delete-asset/${id}`;
+    document.getElementById('assetConfirmOverlay').classList.add('open');
+}
+document.getElementById('assetConfirmOverlay').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+});
+</script>
 
 {% endblock %}

@@ -1,141 +1,149 @@
 {% extends "base.html" %}
-
 {% block title %}Audit Log{% endblock %}
 
 {% block content %}
 
 <style>
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-    }
-
-    .page-header h1 {
-        font-size: 22px;
-        font-weight: 700;
-        color: #1a1f2e;
-        margin: 0;
-    }
-
-    .page-header .subtitle {
-        font-size: 13px;
-        color: #6b7280;
-        margin-top: 4px;
-    }
-
-    .table-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-        overflow: hidden;
-        border: 1px solid #e5e7eb;
-    }
-
-    table { width: 100%; border-collapse: collapse; }
-
-    thead th {
-        padding: 11px 16px;
-        text-align: left;
-        font-size: 11px;
-        font-weight: 600;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.7px;
-        background: #f9fafb;
-        border-bottom: 1px solid #e5e7eb;
-        white-space: nowrap;
-    }
-
-    tbody tr {
-        border-bottom: 1px solid #f3f4f6;
-        transition: background 0.15s;
-    }
-
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: #f8f9ff; }
-
-    tbody td {
-        padding: 11px 16px;
-        font-size: 13px;
-        color: #374151;
-        vertical-align: top;
-    }
-
-    .badge {
+    .action-badge {
         display: inline-block;
         padding: 2px 9px;
         border-radius: 20px;
         font-size: 11px;
-        font-weight: 600;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.4px;
     }
+    .action-create { background: #dcfce7; color: #15803d; }
+    .action-update { background: #dbeafe; color: #1d4ed8; }
+    .action-delete { background: #fee2e2; color: #be123c; }
+    .action-other  { background: #f1f5f9; color: #475569; }
 
-    .badge-create  { background: #d1fae5; color: #065f46; }
-    .badge-update  { background: #dbeafe; color: #1e40af; }
-    .badge-delete  { background: #fee2e2; color: #991b1b; }
-    .badge-default { background: #f3f4f6; color: #374151; }
-
-    .entity-type {
+    .entity-chip {
         font-weight: 600;
-        color: #4e73df;
-        font-size: 12px;
+        color: var(--brand);
+        font-size: 12.5px;
         text-transform: capitalize;
     }
 
-    .entity-id {
-        color: #9ca3af;
-        font-size: 12px;
-    }
-
-    .value-cell {
-        font-family: 'Courier New', Courier, monospace;
+    .value-mono {
+        font-family: 'Courier New', monospace;
         font-size: 11.5px;
-        color: #374151;
+        color: #475569;
         white-space: pre-wrap;
         word-break: break-all;
-        max-width: 240px;
+        max-width: 220px;
     }
 
-    .timestamp-cell {
+    .ts-cell {
         white-space: nowrap;
-        color: #6b7280;
+        color: var(--text-muted);
         font-size: 12.5px;
     }
+
+    .filter-bar {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        background: #fafbfc;
+    }
+
+    .filter-bar input,
+    .filter-bar select {
+        padding: 7px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 13px;
+        outline: none;
+        font-family: 'Inter', sans-serif;
+        background: white;
+        color: var(--text-primary);
+        transition: border-color 0.15s;
+    }
+    .filter-bar input:focus,
+    .filter-bar select:focus { border-color: var(--brand); }
+
+    .filter-apply {
+        padding: 7px 14px;
+        border-radius: 8px;
+        background: var(--brand);
+        color: white;
+        border: none;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+    }
+    .filter-apply:hover { background: var(--brand-dark); }
+
+    .filter-clear {
+        padding: 7px 12px;
+        border-radius: 8px;
+        background: white;
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+        font-size: 12.5px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        font-family: 'Inter', sans-serif;
+    }
+    .filter-clear:hover { background: #f1f5f9; }
 
     .empty-state {
         text-align: center;
         padding: 60px 20px;
-        color: #9ca3af;
-        font-size: 13px;
+        color: #94a3b8;
     }
-
-    .empty-state svg {
-        display: block;
-        margin: 0 auto 12px;
-        opacity: 0.3;
-    }
+    .empty-state .empty-icon { font-size: 32px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; font-weight: 500; color: #64748b; }
 </style>
 
 <div class="page-header">
     <div>
         <h1>Audit Log</h1>
-        <div class="subtitle">Last 500 entries, most recent first</div>
+        <p style="font-size:13px; color:var(--text-muted); margin-top:2px;">
+            Last 500 entries · most recent first
+        </p>
     </div>
 </div>
 
-<div class="table-card">
+<div class="card-surface" style="overflow:hidden;">
+    <!-- Filter bar -->
+    <form method="GET" action="/audit-log" class="filter-bar">
+        <input type="text" name="user" placeholder="👤 Username…"
+               value="{{ f_user }}" style="width:170px;">
+        <select name="action" style="min-width:130px; appearance:auto;">
+            <option value="">All Actions</option>
+            <option value="CREATE" {% if f_action == 'CREATE' %}selected{% endif %}>Create</option>
+            <option value="UPDATE" {% if f_action == 'UPDATE' %}selected{% endif %}>Update</option>
+            <option value="DELETE" {% if f_action == 'DELETE' %}selected{% endif %}>Delete</option>
+        </select>
+        <select name="entity" style="min-width:140px; appearance:auto;">
+            <option value="">All Entities</option>
+            {% for et in entity_types %}
+            <option value="{{ et }}" {% if f_entity == et %}selected{% endif %}>{{ et|capitalize }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="filter-apply">Apply</button>
+        <a href="/audit-log" class="filter-clear">Clear</a>
+        <span style="font-size:12px; color:var(--text-muted); margin-left:4px;">
+            {{ entries|length }} result{{ 's' if entries|length != 1 }}
+        </span>
+    </form>
+
     {% if entries %}
-    <table>
+    <table class="data-table">
         <thead>
             <tr>
                 <th>Timestamp</th>
-                <th>Username</th>
+                <th>User</th>
                 <th>Action</th>
-                <th>Entity Type</th>
-                <th>Entity ID</th>
+                <th>Entity</th>
+                <th>ID</th>
                 <th>Old Value</th>
                 <th>New Value</th>
             </tr>
@@ -143,34 +151,31 @@
         <tbody>
             {% for entry in entries %}
             <tr>
-                <td class="timestamp-cell">{{ entry.timestamp }}</td>
+                <td class="ts-cell">{{ entry.timestamp }}</td>
                 <td><strong>{{ entry.username }}</strong></td>
                 <td>
                     {% if entry.action == 'CREATE' %}
-                        <span class="badge badge-create">Create</span>
+                        <span class="action-badge action-create">Create</span>
                     {% elif entry.action == 'UPDATE' %}
-                        <span class="badge badge-update">Update</span>
+                        <span class="action-badge action-update">Update</span>
                     {% elif entry.action == 'DELETE' %}
-                        <span class="badge badge-delete">Delete</span>
+                        <span class="action-badge action-delete">Delete</span>
                     {% else %}
-                        <span class="badge badge-default">{{ entry.action }}</span>
+                        <span class="action-badge action-other">{{ entry.action }}</span>
                     {% endif %}
                 </td>
-                <td><span class="entity-type">{{ entry.entity_type }}</span></td>
-                <td><span class="entity-id">{{ entry.entity_id }}</span></td>
-                <td><div class="value-cell">{{ entry.old_value or '—' }}</div></td>
-                <td><div class="value-cell">{{ entry.new_value or '—' }}</div></td>
+                <td><span class="entity-chip">{{ entry.entity_type }}</span></td>
+                <td style="color:#94a3b8; font-size:13px;">{{ entry.entity_id }}</td>
+                <td><div class="value-mono">{{ entry.old_value or '—' }}</div></td>
+                <td><div class="value-mono">{{ entry.new_value or '—' }}</div></td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     {% else %}
     <div class="empty-state">
-        <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        No audit log entries yet.
+        <div class="empty-icon">📋</div>
+        <p>No audit entries match the current filters.</p>
     </div>
     {% endif %}
 </div>

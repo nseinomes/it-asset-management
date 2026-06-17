@@ -1,150 +1,101 @@
 {% extends "base.html" %}
-
 {% block title %}Edit Asset{% endblock %}
 
 {% block content %}
 
 <style>
-    .back-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        color: #6b7280;
-        text-decoration: none;
-        font-size: 13px;
-        font-weight: 500;
-        margin-bottom: 20px;
-        transition: color 0.15s;
-    }
+    .form-wrap { max-width: 700px; }
 
-    .back-link:hover { color: #4e73df; }
-
-    .form-card {
-        background: white;
-        border-radius: 12px;
-        padding: 30px 35px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-        max-width: 680px;
-        border: 1px solid #e5e7eb;
-    }
-
-    .form-card h1 {
-        color: #1a1f2e;
-        margin-bottom: 24px;
-        font-size: 20px;
-        font-weight: 700;
-        padding-bottom: 16px;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    .section-title {
+    .form-section {
         font-size: 11px;
-        font-weight: 600;
-        color: #9ca3af;
+        font-weight: 700;
+        color: var(--text-muted);
         text-transform: uppercase;
         letter-spacing: 0.8px;
-        margin: 20px 0 14px;
+        margin: 24px 0 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
     }
-
-    .section-title:first-of-type { margin-top: 0; }
+    .form-section:first-child { margin-top: 0; }
 
     .form-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0 20px;
     }
+    .form-grid .span-2 { grid-column: 1 / -1; }
 
-    .form-grid .full { grid-column: 1 / -1; }
+    .field { margin-bottom: 16px; }
 
-    .form-card label {
+    .field label {
         display: block;
-        margin-bottom: 5px;
+        font-size: 12px;
         font-weight: 600;
-        color: #374151;
-        font-size: 13px;
-    }
-
-    .form-card input,
-    .form-card select,
-    .form-card textarea {
-        width: 100%;
-        padding: 9px 12px;
-        margin-bottom: 16px;
-        border: 1px solid #e5e7eb;
-        border-radius: 7px;
-        font-size: 13.5px;
-        font-family: 'Inter', sans-serif;
-        color: #1a1f2e;
-        background: white;
-        transition: border-color 0.15s;
-    }
-
-    .form-card input:focus,
-    .form-card select:focus,
-    .form-card textarea:focus {
-        outline: none;
-        border-color: #4e73df;
-        box-shadow: 0 0 0 3px rgba(78,115,223,0.1);
-    }
-
-    .form-card textarea {
-        resize: vertical;
-        min-height: 80px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 5px;
     }
 
     .form-actions {
         display: flex;
         gap: 10px;
-        margin-top: 8px;
+        margin-top: 28px;
         padding-top: 20px;
-        border-top: 1px solid #f0f0f0;
+        border-top: 1px solid var(--border);
     }
 </style>
 
-<a href="/assets" class="back-link">← Back to Assets</a>
-
-<div class="form-card">
+<div class="page-header">
     <h1>Edit Asset</h1>
+    <a href="/assets" class="btn-secondary">← Back</a>
+</div>
 
+<div class="card-surface form-wrap" style="padding: 28px 32px;">
     <form method="POST">
 
-        <div class="section-title">Basic Info</div>
+        <div class="form-section">Basic Info</div>
         <div class="form-grid">
-            <div>
+            <div class="field">
                 <label>Asset Tag *</label>
-                <input type="text" name="asset_tag" value="{{ asset.asset_tag }}" required>
+                <input class="form-input" type="text" name="asset_tag"
+                       value="{{ asset.asset_tag }}" required>
             </div>
-            <div>
+            <div class="field">
                 <label>Status *</label>
-                <select name="status">
+                <select class="form-input" name="status" style="appearance:auto;">
                     <option value="Active"      {% if asset.status == 'Active' %}selected{% endif %}>Active</option>
                     <option value="Maintenance" {% if asset.status == 'Maintenance' %}selected{% endif %}>Maintenance</option>
                     <option value="Inactive"    {% if asset.status == 'Inactive' %}selected{% endif %}>Inactive</option>
                 </select>
             </div>
-            <div class="full">
+            <div class="field span-2">
                 <label>Name *</label>
-                <input type="text" name="name" value="{{ asset.name }}" required>
+                <input class="form-input" type="text" name="name"
+                       value="{{ asset.name }}" required>
             </div>
         </div>
 
-        <div class="section-title">Device Details</div>
+        <div class="form-section">Device Details</div>
         <div class="form-grid">
-            <div>
+            <div class="field">
                 <label>Brand</label>
-                <input type="text" name="brand" value="{{ asset.brand or '' }}" placeholder="e.g. Dell, HP, Apple">
+                <input class="form-input" type="text" name="brand"
+                       value="{{ asset.brand or '' }}" placeholder="e.g. Dell, HP, Apple">
             </div>
-            <div>
+            <div class="field">
                 <label>Model</label>
-                <input type="text" name="model" value="{{ asset.model or '' }}" placeholder="e.g. XPS 15, ThinkPad X1">
+                <input class="form-input" type="text" name="model"
+                       value="{{ asset.model or '' }}" placeholder="e.g. XPS 15">
             </div>
-            <div>
+            <div class="field">
                 <label>Serial Number</label>
-                <input type="text" name="serial_number" value="{{ asset.serial_number or '' }}" placeholder="Serial / S/N">
+                <input class="form-input" type="text" name="serial_number"
+                       value="{{ asset.serial_number or '' }}" placeholder="S/N">
             </div>
-            <div>
+            <div class="field">
                 <label>Category</label>
-                <select name="category_id">
+                <select class="form-input" name="category_id" style="appearance:auto;">
                     <option value="">— No category —</option>
                     {% for cat in categories %}
                     <option value="{{ cat.id }}"
@@ -156,29 +107,34 @@
             </div>
         </div>
 
-        <div class="section-title">Location & Dates</div>
+        <div class="form-section">Location & Dates</div>
         <div class="form-grid">
-            <div>
+            <div class="field">
                 <label>Location</label>
-                <input type="text" name="location" value="{{ asset.location or '' }}" placeholder="e.g. Room 2A, Floor 3">
+                <input class="form-input" type="text" name="location"
+                       value="{{ asset.location or '' }}" placeholder="e.g. Room 2A">
             </div>
-            <div>
+            <div class="field">
                 <label>Purchase Date</label>
-                <input type="date" name="purchase_date"
+                <input class="form-input" type="date" name="purchase_date"
                     value="{{ asset.purchase_date.strftime('%Y-%m-%d') if asset.purchase_date else '' }}">
             </div>
-            <div>
+            <div class="field">
                 <label>Warranty Expiration</label>
-                <input type="date" name="warranty_expiration"
+                <input class="form-input" type="date" name="warranty_expiration"
                     value="{{ asset.warranty_expiration.strftime('%Y-%m-%d') if asset.warranty_expiration else '' }}">
             </div>
         </div>
 
-        <div class="section-title">Notes</div>
-        <textarea name="notes" placeholder="Additional notes about this asset...">{{ asset.notes or '' }}</textarea>
+        <div class="form-section">Notes</div>
+        <div class="field">
+            <textarea class="form-input" name="notes" rows="3"
+                      style="resize:vertical;"
+                      placeholder="Additional notes…">{{ asset.notes or '' }}</textarea>
+        </div>
 
         <div class="form-actions">
-            <a href="/assets"><button type="button" class="btn-warning">Cancel</button></a>
+            <a href="/assets" class="btn-secondary">Cancel</a>
             <button type="submit" class="btn-primary">Update Asset</button>
         </div>
 

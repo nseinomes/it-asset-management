@@ -3,131 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Evolve</title>
-
+    <title>Sign In — Evolve IT Asset Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
         }
 
-        body{
-            font-family: Arial, sans-serif;
-            background:#f4f6f9;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            height:100vh;
+        .login-wrapper {
+            width: 100%;
+            max-width: 420px;
         }
 
-        .login-box{
-            background:white;
-            padding:40px;
-            border-radius:15px;
-            box-shadow:0 10px 25px rgba(0,0,0,0.1);
-            width:420px;
+        .login-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 44px 40px 40px;
+            box-shadow: 0 4px 24px rgba(15,23,42,0.08), 0 1px 4px rgba(15,23,42,0.04);
+            border: 1px solid #e2e8f0;
         }
 
-        .logo{
-            width:220px;
-            display:block;
-            margin:0 auto 25px;
+        .login-logo {
+            display: block;
+            height: 36px;
+            width: auto;
+            margin: 0 auto 28px;
         }
 
-        h2{
-            text-align:center;
-            color:#2c3e50;
-            margin-bottom:10px;
+        .login-heading {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+            text-align: center;
+            margin-bottom: 4px;
         }
 
-        .subtitle{
-            text-align:center;
-            color:#7f8c8d;
-            margin-bottom:30px;
+        .login-sub {
+            font-size: 13.5px;
+            color: #64748b;
+            text-align: center;
+            margin-bottom: 32px;
         }
 
-        label{
-            display:block;
-            margin-bottom:8px;
-            font-weight:bold;
-            color:#2c3e50;
+        .field {
+            margin-bottom: 18px;
         }
 
-        input{
-            width:100%;
-            padding:12px;
-            margin-bottom:20px;
-            border:1px solid #dcdde1;
-            border-radius:8px;
-            font-size:15px;
+        .field label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+            letter-spacing: 0.01em;
         }
 
-        input:focus{
-            outline:none;
-            border-color:#4e73df;
+        .field input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 9px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: #0f172a;
+            background: #fff;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            outline: none;
         }
 
-        button{
-            width:100%;
-            padding:14px;
-            background:#4e73df;
-            color:white;
-            border:none;
-            border-radius:8px;
-            font-size:16px;
-            cursor:pointer;
-            transition:0.3s;
+        .field input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
         }
 
-        button:hover{
-            background:#2e59d9;
+        .field input::placeholder { color: #94a3b8; }
+
+        .error-banner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff1f2;
+            border: 1px solid #fecdd3;
+            color: #be123c;
+            border-radius: 9px;
+            padding: 11px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
         }
 
+        .btn-signin {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: background 0.15s, box-shadow 0.15s;
+            margin-top: 8px;
+        }
+
+        .btn-signin:hover {
+            background: #1d4ed8;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 28px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
     </style>
 </head>
-
 <body>
 
-<div class="login-box">
+<div class="login-wrapper">
+    <div class="login-card">
+        <img src="{{ url_for('static', filename='images/evolve_logo.png') }}"
+             alt="Evolve" class="login-logo">
 
-    <img
-        src="{{ url_for('static', filename='images/evolve_logo.png') }}"
-        alt="Evolve Logo"
-        class="logo"
-    >
+        <h1 class="login-heading">Welcome back</h1>
+        <p class="login-sub">Sign in to IT Asset Management</p>
 
-    <h2>IT Asset Management</h2>
+        {% if error %}
+        <div class="error-banner">
+            <span>⚠</span> {{ error }}
+        </div>
+        {% endif %}
 
-    <p class="subtitle">
-        Evolve SRL
-    </p>
+        <form method="POST" autocomplete="on">
+            <div class="field">
+                <label for="username">Username</label>
+                <input id="username" type="text" name="username"
+                       placeholder="Enter your username"
+                       autocomplete="username" required autofocus>
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input id="password" type="password" name="password"
+                       placeholder="••••••••"
+                       autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn-signin">Sign In →</button>
+        </form>
+    </div>
 
-    <form method="POST">
-
-    <label>Username</label>
-    <input
-        type="text"
-        name="username"
-        placeholder="Enter your username"
-        required
-    >
-
-    <label>Password</label>
-    <input
-        type="password"
-        name="password"
-        placeholder="Enter your password"
-        required
-    >
-
-    <button type="submit">
-        Login
-    </button>
-
-</form>
-
+    <div class="login-footer">Evolve SRL · IT Asset Management</div>
 </div>
 
 </body>

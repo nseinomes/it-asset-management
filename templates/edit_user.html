@@ -1,115 +1,42 @@
 {% extends "base.html" %}
-
 {% block title %}Edit User{% endblock %}
 
 {% block content %}
 
 <style>
-    .page-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: #1a1f2e;
-        margin-bottom: 30px;
-    }
+    .form-wrap { max-width: 460px; }
 
-    .form-card {
-        background: white;
-        border-radius: 12px;
-        padding: 30px;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        max-width: 500px;
-    }
+    .field { margin-bottom: 16px; }
 
-    .form-label {
-        font-weight: 600;
-        color: #1a1f2e;
-        font-size: 14px;
-        margin-bottom: 8px;
+    .field label {
         display: block;
-    }
-
-    .form-label-optional {
-        font-weight: 600;
-        color: #1a1f2e;
-        font-size: 14px;
-        margin-bottom: 4px;
-        display: block;
-    }
-
-    .form-hint {
         font-size: 12px;
-        color: #9ca3af;
-        margin-bottom: 8px;
-        display: block;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 5px;
     }
 
-    .form-control {
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        padding: 10px 14px;
-        font-size: 14px;
-        width: 100%;
-        margin-bottom: 16px;
-        font-family: inherit;
-        box-sizing: border-box;
-        background: white;
-    }
-
-    .form-control:focus {
-        border-color: #4e73df;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(78,115,223,0.1);
+    .field-hint {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: -10px;
+        margin-bottom: 12px;
     }
 
     .form-actions {
         display: flex;
         gap: 10px;
         margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
     }
 
-    .btn-primary {
-        background: #4e73df;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
-        flex: 1;
-    }
-
-    .btn-primary:hover {
-        background: #2e59d9;
-    }
-
-    .btn-secondary {
-        background: #e9ecef;
-        color: #495057;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
-        flex: 1;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .btn-secondary:hover {
-        background: #dee2e6;
-    }
-
-    .alert-error {
-        background: #fef2f2;
-        border: 1px solid #fecaca;
-        color: #b91c1c;
+    .alert-inline {
+        background: #fff1f2;
+        border: 1px solid #fecdd3;
+        color: #be123c;
         border-radius: 8px;
         padding: 10px 14px;
         font-size: 13px;
@@ -118,42 +45,49 @@
 
     .user-meta {
         font-size: 13px;
-        color: #6b7280;
-        margin-bottom: 24px;
+        color: var(--text-muted);
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
     }
-
-    .user-meta strong {
-        color: #1a1f2e;
-    }
+    .user-meta strong { color: var(--text-primary); }
 </style>
 
-<div class="page-title">Edit User</div>
+<div class="page-header">
+    <h1>Edit User</h1>
+    <a href="/users" class="btn-secondary">← Back</a>
+</div>
 
-<div class="form-card">
+<div class="card-surface form-wrap" style="padding: 24px 28px;">
     <p class="user-meta">Editing account: <strong>{{ user.username }}</strong></p>
 
     {% if error %}
-    <div class="alert-error">{{ error }}</div>
+    <div class="alert-inline">{{ error }}</div>
     {% endif %}
 
     <form method="POST" action="/users/edit/{{ user.id }}">
-        <label class="form-label">Role *</label>
-        <select name="role_id" class="form-control" required>
-            {% for role in roles %}
-            <option value="{{ role.id }}" {% if role.id == user.role_id %}selected{% endif %}>
-                {{ role.name }}
-            </option>
-            {% endfor %}
-        </select>
+        <div class="field">
+            <label>Role *</label>
+            <select class="form-input" name="role_id" required style="appearance:auto;">
+                {% for role in roles %}
+                <option value="{{ role.id }}" {% if role.id == user.role_id %}selected{% endif %}>
+                    {{ role.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <label class="form-label-optional">New Password</label>
-        <span class="form-hint">Leave blank to keep the current password. Min. 8 characters if changing.</span>
-        <input type="password" name="password" class="form-control"
-               placeholder="New password (optional)" minlength="8" autocomplete="new-password">
+        <div class="field">
+            <label>New Password</label>
+            <input class="form-input" type="password" name="password"
+                   placeholder="Leave blank to keep current" minlength="8"
+                   autocomplete="new-password">
+        </div>
+        <p class="field-hint">Minimum 8 characters. Leave blank to keep the existing password.</p>
 
         <div class="form-actions">
-            <a href="/users" class="btn-secondary">Cancel</a>
-            <button type="submit" class="btn-primary">Save Changes</button>
+            <a href="/users" class="btn-secondary" style="flex:1; justify-content:center;">Cancel</a>
+            <button type="submit" class="btn-primary" style="flex:1; justify-content:center;">Save Changes</button>
         </div>
     </form>
 </div>
